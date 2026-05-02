@@ -13,7 +13,7 @@ app.use(express.json())
 
 app.get("/health", async (req, res)=>{
     try{
-        const result =  await pool.query("SELECT NOW()")
+        const result = await pool.query("SELECT NOW()")
         res.json({message: "DB connection working as it should", time: result.rows[0]})
     }catch(err){
         res.status(500).json({ status: "Database connection failed"})
@@ -23,7 +23,6 @@ app.get("/health", async (req, res)=>{
 
 //global error handling portion of the code
 app.use(errorHandler)
-
-app.listen(Number(process.env.PORT)|| 5000, ()=>{
-    console.log("server is running at port", process.env.PORT)
+app.listen(5000, ()=>{
+    console.log("server is running at port: 5000")
 })
