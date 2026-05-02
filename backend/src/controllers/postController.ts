@@ -156,3 +156,32 @@ export const updatePost = async (req: authRequest, res: Response, next : NextFun
         next(err)
     }
 }
+
+
+//deleting a post with index
+export const deletePost = async (req: authRequest, res: Response, next: NextFunction)=>{
+    try{
+        const {id} = req.params
+
+        const postResult = await pool.query("SELECT * FROM posts WHERE id=$1", [id])
+        if(postResult.rows.length===0){
+            res.status(404).json({message: "Post not found"})
+            return
+        }
+
+        const post = postResult.rows[0]
+        const isAuthor = post.author_id === req.user!.id
+        const isAdmin = req.user!.role === "admin"
+
+        if(!isAuthor && !isAdmin){
+            res.status(403).json({message: "Not allowed to delete this post"})
+            return
+        }
+
+        await pool.query("DELETE FROM posts WHERE id = $1", [id])
+
+        res.status(200).json({message: "Post deleted successfully"})
+    }catch(err){
+        next(err)
+    }
+}
