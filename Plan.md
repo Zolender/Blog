@@ -68,8 +68,8 @@ Before writing a single query, we must define how our data lives together.
 These are the routes to be built in Node.js.
 
 ### Auth Routes
-- [ ] POST `/auth/register` - Create new account (default role: "user")
-- [ ] POST `/auth/login` - Authenticate and return JWT (include role in payload)
+- [x] POST `/auth/register` - Create new account (default role: "user")
+- [x] POST `/auth/login` - Authenticate and return JWT (include role in payload)
 
 ### Post Routes
 - [ ] GET `/posts` - Fetch all posts
@@ -101,8 +101,8 @@ These are the routes to be built in Node.js.
   - Manage users (delete, update roles)
 
 ### Backend Enforcement
-- [ ] Extend JWT payload to include `role`
-- [ ] Create `roleMiddleware(allowedRoles: string[])`
+- [x] Extend JWT payload to include `role`
+- [x] Create `roleMiddleware(allowedRoles: string[])`
 - [ ] Apply middleware to protected routes (Admin-only where required)
 
 ---
@@ -110,17 +110,17 @@ These are the routes to be built in Node.js.
 ## 4. Execution Roadmap (The Checklist)
 
 ### Phase 1: Environment & Infrastructure
-- [ ] Set up TypeScript configuration (`tsconfig.json`)
-- [ ] Configure `.env` for local and production variables
-- [ ] Create Database Pool connection in `src/config/db.ts`
-- [ ] Establish global error-handling middleware
+- [x] Set up TypeScript configuration (`tsconfig.json`)
+- [x] Configure `.env` for local and production variables
+- [x] Create Database Pool connection in `src/config/db.ts`
+- [x] Establish global error-handling middleware
 
 ### Phase 2: Authentication Engine (The Gatekeeper)
-- [ ] Implement `bcryptjs` for password hashing
-- [ ] Create JWT utility (include role in token)
-- [ ] Build `authMiddleware.ts` (verify token)
-- [ ] Build `roleMiddleware.ts` (RBAC enforcement)
-- [ ] Implement Register and Login controllers
+- [x] Implement `bcryptjs` for password hashing
+- [x] Create JWT utility (include role in token)
+- [x] Build `authMiddleware.ts` (verify token)
+- [x] Build `roleMiddleware.ts` (RBAC enforcement)
+- [x] Implement Register and Login controllers
 
 ### Phase 3: Core Features (The CRUD)
 - [ ] Build Post controllers and routes
