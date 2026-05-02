@@ -4,7 +4,6 @@ import dotenv from "dotenv"
 import { errorHandler } from "./middleware/errorMiddleware.js"
 import healthRoute from "./routes/healthRoute.js"
 import authRoutes from "./routes/authRoutes.js"
-import pool from "./config/db.js"
 
 
 
@@ -15,13 +14,7 @@ app.use(express.json())
 
 app.use("/auth", authRoutes)
 
-app.get("/health", async (req, res)=>{
-    try{
-        const result = await pool.query("SELECT NOW()")
-        res.json({message: "DB connection working as it should", time: result.rows[0]})
-    }catch(err){
-        res.status(500).json({ status: "Database connection failed"})
-    }})
+app.use("/health", healthRoute)
 
 
 
