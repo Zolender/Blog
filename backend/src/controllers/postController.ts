@@ -112,3 +112,47 @@ export const createPost = async (req: authRequest, res: Response, next: NextFunc
 }
 
 
+//editing a post (put op with posts/:id)
+
+export const updatePost = async (req: authRequest, res: Response, next : NextFunction)=>{
+    try{
+        const {id} = req.params
+
+        const postResult = await pool.query("SELECT * FROM posts WHERE id=$1", [id])
+        if(postResult.rows.length===0){
+            res.status(404).json({message: "Post not found"})
+            return
+        }
+
+        const post = postResult.rows[0]
+        const isAuthor = post.author_id === req.user!.id
+        const isAdmin = req.user!.role === "admin"
+
+        if(!isAuthor && !isAdmin){
+            res.status(403).json({method : "Not allowed to edit this post"})
+            return
+        }
+
+        const parsed = postSchema.partial().safeParse(req.body)
+        if(!parsed.success){
+            const errors = parsed.error.issues.map(({path, message})=> ({path, message}))
+            res.status(400).json({message: "Invalid Input", errors})
+            return
+        }
+
+        const {title, content, banner_image} = parsed.data
+
+        const updated = await pool.query(`
+                UPDATE posts 
+                SET
+                    title = COALESCE($1, title),
+                    content = COALESCE($2, content),
+                    banner_image = COALESCE($3, banner_image)
+                WHERE id = $4
+                RETURNING *
+            `, [title ?? null, content ?? null, banner_image ?? null, id])
+            res.status(200).json({message: "Post updated", post: updated.rows[0]})
+    }catch(err){
+        next(err)
+    }
+}
