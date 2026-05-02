@@ -39,3 +39,51 @@ export const getAllPosts = async (req: Request, res: Response, next: NextFunctio
         next(err)
     }
 }
+
+//getting a single post with user/author and comments of that posts(/posts/:id)
+export const getPostById = async (req: Request, res: Response, next: NextFunction)=>{
+    try{
+        const {id} = req.params
+
+        const postResult = await pool.query(`
+                SELECT 
+                    posts.id,
+                    posts.title,
+                    posts.content,
+                    posts.banner_image,
+                    posts.created_at,
+                    users.id AS author_id,
+                    users.username AS author_username,
+                    users.profile_pic AS author_profile_pic,
+                    COUNT(DISTINCT likes.user_id) AS like_count
+                FROM posts
+                JOIN users ON posts.author_id = users.index
+                LEFT JOIN likes ON posts.id = likes.post_id
+                WHERE posts.id = $1
+                GROUP BY posts.id, users.id 
+            `, [id])
+            if(postResult.rows.length === 0){
+                res.status(404).json({message: "Post not found"})
+                return
+            }
+
+            const commentsResult = await pool.query(`
+                    SELECT
+                        comments.id,
+                        comments.content,
+                        comments.created_at,
+                        users.id AS author_id,
+                        users.username AS author_username,
+                        users.profile_pic AS author_profile_pic
+                    FROM comments
+                    JOIN users ON comments.author_id = users.id
+                    WHERE comments.post_id = $1
+                    ORDER BY comments.created_at ASC
+                `, [id])
+
+                res.status(200).json({post: postResult.rows[0], comments: commentsResult.rows})
+
+    }catch(err){
+        next(err)
+    }
+}
