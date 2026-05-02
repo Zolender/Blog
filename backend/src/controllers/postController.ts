@@ -87,3 +87,28 @@ export const getPostById = async (req: Request, res: Response, next: NextFunctio
         next(err)
     }
 }
+
+//creating a post
+export const createPost = async (req: authRequest, res: Response, next: NextFunction)=>{
+    try{
+        const parsed = postSchema.safeParse(req.body)
+        if(!parsed.success){
+            const errors = parsed.error.issues.map(({path, message})=> ({path,message}))
+            res.json(400).json({message : "Invalid Input", errors})
+            return
+        }
+
+        const {title, content, banner_image} = parsed.data
+        const author_id = req.user!.id
+
+        const result = await pool.query(`
+                INSERT INTO posts (author_id, title, content, banner_image) VALUES ($1,$2,$3,$4) RETURNING *
+            `, [author_id, title, content, banner_image ?? null])
+
+            res.status(201).json({message : "Post created", post: result.rows[0]})
+    }catch(err){
+        next(err)
+    }
+}
+
+
