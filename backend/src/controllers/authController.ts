@@ -49,7 +49,41 @@ export const register = async (req: Request, res: Response, next: NextFunction):
 
 export const login = async (req: Request, res: Response, next: NextFunction)=>{
     try{
-        
+        const parsed = loginSchema.safeParse(req.body)
+        if(!parsed.success){
+            const errors = parsed.error.issues.map(({path, message})=> ({path, message}))
+            res.status(400).json({ message : "Invalid input", errors})
+            return
+        }
+
+        const {email, password} = parsed.data
+        //check in db for the user
+        const result = await pool.query("SELECT * FROM users WHERE email = $1", [email])
+        const user = result.rows[0]
+        if(!user){
+            res.status(401).json({message : "Invalid email or password"})
+            return
+        }
+        //check the password now 
+        const isMatch = await bcrypt.compare(password, user.password_hashed)
+        if(!isMatch){
+            res.status(401).json({message : "Invalid email or password"})
+            return
+        }
+
+        //sign the token
+        const token = signToken({ id: user.id, username: user.username, role: user.role})
+
+        res.status(200).json({ 
+            message : "Login successfully",
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role
+            }
+        })
     }catch(err){
         next(err)
     }
