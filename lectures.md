@@ -195,102 +195,66 @@ The outer function captures `roles` in a closure. The inner function has access 
 when Express eventually calls it.
 
 ---
+## Phase 3 — Admin & Comment Replies
 
-## Phase 3 — Core Features
+### Self-referencing foreign keys
 
-### SQL JOINs and why we use them
-
-Instead of making separate queries to get a post and then its author, a `JOIN` fetches
-both in a single round trip to the database:
+A table can reference itself. The `comments` table uses this to model reply threads:
 
 ```sql
-SELECT posts.*, users.username AS author_username
-FROM posts
-JOIN users ON posts.author_id = users.id
+ALTER TABLE comments ADD COLUMN parent_id INTEGER REFERENCES comments(id) ON DELETE CASCADE;
 ```
 
-`LEFT JOIN` is used for likes and comments because a post with zero likes or comments
-should still be returned — an `INNER JOIN` would exclude it.
+A comment where `parent_id IS NULL` is a top-level comment.
+A comment where `parent_id = 5` is a reply to comment 5.
+`ON DELETE CASCADE` means deleting a parent comment automatically deletes all its replies.
+No extra application logic required.
 
-### COUNT with DISTINCT
+### Validating a reply belongs to the same post
 
-```sql
-COUNT(DISTINCT likes.user_id) AS like_count
-COUNT(DISTINCT comments.id) AS comment_count
-```
-
-When joining multiple tables that have a one-to-many relationship with the main table,
-rows multiply. `DISTINCT` ensures we count unique entries, not duplicates introduced
-by the join.
-
-### COALESCE for partial updates
-
-```sql
-SET title = COALESCE($1, title)
-```
-
-`COALESCE` returns the first non-null value. If `$1` is null (the field was not sent
-in the request), it falls back to the existing column value. This allows a client to
-send only the fields they want to update without overwriting the rest with nulls.
-
-### The like toggle pattern
-
-A single endpoint handles both liking and unliking. The server checks the database
-for an existing like record. If it exists, it deletes it. If it does not, it inserts one.
-
-This is cleaner than separate `/like` and `/unlike` routes. The client does not need
-to track state. The database is always the source of truth.
-
-### RBAC enforcement at the controller level
-
-For post edit and delete, ownership is checked inside the controller:
+When adding a reply, it is not enough to check that the parent comment exists.
+You must also verify it belongs to the same post the client is replying to.
+Without this check, a client could craft a request that links a reply to an
+unrelated post, corrupting the data.
 
 ```typescript
-const isAuthor = post.author_id === req.user.id;
-const isAdmin = req.user.role === "admin";
+const parentExists = await pool.query(
+  "SELECT id FROM comments WHERE id = $1 AND post_id = $2",
+  [parent_id, post_id]
+);
+```
 
-if (!isAuthor && !isAdmin) {
-  res.status(403).json({ message: "Not allowed" });
+### Applying middleware at the router level
+
+Instead of repeating `protect` and `restrictTo("admin")` on every admin route,
+apply them once at the router level:
+
+```typescript
+router.use(protect, restrictTo("admin"));
+```
+
+Every route registered on that router after this line inherits both middleware.
+Cleaner and eliminates the risk of forgetting to protect a route.
+
+### Guarding against self-targeting in admin operations
+
+An admin should not be able to delete their own account or change their own role.
+If they could, they might accidentally remove the last admin, locking everyone out.
+This is checked inside the controller by comparing the target user's id
+against `req.user.id`:
+
+```typescript
+if (Number(id) === req.user!.id) {
+  res.status(400).json({ message: "You cannot delete your own account" });
   return;
 }
 ```
-
-The `roleMiddleware` alone is not sufficient here because the rule is not just about
-role — it is about ownership. An admin can edit any post. A user can only edit their own.
-This logic requires knowing both the requester's identity and the resource's owner.
-
----
-
-## Challenges Faced
-
-### The server would not start
-
-Root cause: `ts-node-dev` does not support ESM. Replacing it with `tsx` resolved the issue.
-Lesson: always verify that tooling supports your module system before choosing it.
-
-### `pool.on("connect")` never fired
-
-This was not a bug. The pg pool is lazy — it does not connect until the first query
-is executed. Waiting for a log that will never come is a misleading debugging strategy.
-The health check route is the correct way to verify database connectivity.
-
-### `dotenv` returning `undefined` for all variables
-
-The `.env` file existed and had correct content. The issue was that `dotenv.config()`
-resolves relative to `process.cwd()`, which on Windows behaved differently than expected.
-The native `--env-file` flag bypasses this entirely.
-
-### PostgreSQL password authentication intermittently failing
-
-`localhost` on Windows can resolve to a Unix socket (peer authentication) rather than
-TCP. Using `127.0.0.1` forces TCP and consistent password authentication behavior.
-The `--env-file` fix made this moot since the variables were not being loaded at all.
 
 ---
 
 ## Still To Build
 
-- Admin routes (user management)
-- Frontend: React, Redux Toolkit, React Router v7
+- Hardening pass (rate limiting, helmet, pagination, indexes, GET /auth/me)
+- Frontend: React, Redux Toolkit, React Router v7, Tailwind CSS, Framer Motion
 - Supabase migration
-- Vercel deployment
+- Render + Vercel deployment
