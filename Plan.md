@@ -72,15 +72,15 @@ These are the routes to be built in Node.js.
 - [x] POST `/auth/login` - Authenticate and return JWT (include role in payload)
 
 ### Post Routes
-- [ ] GET `/posts` - Fetch all posts
-- [ ] GET `/posts/:id` - Fetch single post with author details
-- [ ] POST `/posts` - Create post (Protected: Authenticated users)
-- [ ] PUT `/posts/:id` - Edit post (Protected: Author or Admin)
-- [ ] DELETE `/posts/:id` - Remove post (Protected: Author or Admin)
+- [x] GET `/posts` - Fetch all posts
+- [x] GET `/posts/:id` - Fetch single post with author details
+- [x] POST `/posts` - Create post (Protected: Authenticated users)
+- [x] PUT `/posts/:id` - Edit post (Protected: Author or Admin)
+- [x] DELETE `/posts/:id` - Remove post (Protected: Author or Admin)
 
 ### Engagement Routes
-- [ ] POST `/posts/:id/comments` - Add comment (Authenticated users)
-- [ ] POST `/posts/:id/like` - Toggle like status (Authenticated users)
+- [x] POST `/posts/:id/comments` - Add comment (Authenticated users)
+- [x] POST `/posts/:id/like` - Toggle like status (Authenticated users)
 
 ### Admin Routes
 - [ ] GET `/admin/users` - Fetch all users (Admin only)
@@ -103,7 +103,7 @@ These are the routes to be built in Node.js.
 ### Backend Enforcement
 - [x] Extend JWT payload to include `role`
 - [x] Create `roleMiddleware(allowedRoles: string[])`
-- [ ] Apply middleware to protected routes (Admin-only where required)
+- [x] Apply middleware to protected routes (Admin-only where required)
 
 ---
 
@@ -123,11 +123,11 @@ These are the routes to be built in Node.js.
 - [x] Implement Register and Login controllers
 
 ### Phase 3: Core Features (The CRUD)
-- [ ] Build Post controllers and routes
-- [ ] Implement SQL JOINs to fetch author data with posts
-- [ ] Add RBAC checks (Author vs Admin logic)
-- [ ] Build Comment system with foreign key integrity
-- [ ] Implement "Like" logic with prevention of duplicate likes
+- [x] Build Post controllers and routes
+- [x] Implement SQL JOINs to fetch author data with posts
+- [x] Add RBAC checks (Author vs Admin logic)
+- [x] Build Comment system with foreign key integrity
+- [x] Implement "Like" logic with prevention of duplicate likes
 
 ### Phase 4: Frontend Development (React + RTK)
 - [ ] Initialize React with Vite and Tailwind CSS
