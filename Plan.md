@@ -67,14 +67,13 @@ Before writing a single query, we must define how our data lives together.
 
 ## 2. The API Contract (RESTful Architecture)
 
-These are the routes to be built in Node.js.
-
 ### Auth Routes
 - [x] POST `/auth/register` - Create new account (default role: "user")
 - [x] POST `/auth/login` - Authenticate and return JWT (include role in payload)
+- [x] GET `/auth/me` - Return current user from token (Protected)
 
 ### Post Routes
-- [x] GET `/posts` - Fetch all posts
+- [x] GET `/posts` - Fetch all posts (paginated)
 - [x] GET `/posts/:id` - Fetch single post with author details and threaded comments
 - [x] POST `/posts` - Create post (Protected: Authenticated users)
 - [x] PUT `/posts/:id` - Edit post (Protected: Author or Admin)
@@ -127,6 +126,7 @@ These are the routes to be built in Node.js.
 - [x] Build `authMiddleware.ts` (verify token)
 - [x] Build `roleMiddleware.ts` (RBAC enforcement)
 - [x] Implement Register and Login controllers
+- [x] Implement GET /auth/me (session rehydration on refresh)
 
 ### Phase 3: Core Features (The CRUD)
 - [x] Build Post controllers and routes
@@ -138,23 +138,28 @@ These are the routes to be built in Node.js.
 - [x] Build Admin routes (user management, role updates)
 
 ### Phase 4: Hardening
-- [ ] Add rate limiting to auth routes (`express-rate-limit`)
-- [ ] Add security headers (`helmet`)
-- [ ] Add pagination to `GET /posts`
-- [ ] Add database indexes on foreign key columns
-- [ ] Add a `GET /auth/me` route (return current user from token)
+- [x] Add rate limiting to auth routes (`express-rate-limit`)
+- [x] Add security headers (`helmet`)
+- [x] Add pagination to `GET /posts`
+- [x] Add database indexes on foreign key columns
+- [x] Add `GET /auth/me` route
 
 ### Phase 5: Frontend Development (React + RTK)
 - [ ] Initialize React with Vite and Tailwind CSS
 - [ ] Install and configure Lucide React for icons
-- [ ] Set up React Router v7 (Data APIs and Layouts)
+- [ ] Set up React Router v7 (layouts and protected routes)
 - [ ] Configure Redux Toolkit `authSlice` (store user + role)
+- [ ] Call `GET /auth/me` on app load to rehydrate session
 - [ ] Implement protected routes based on role
-- [ ] Build Admin Dashboard UI (user management)
+- [ ] Build global post feed with pagination controls
+- [ ] Build single post page with threaded comments
+- [ ] Build create/edit post forms
+- [ ] Build Admin Dashboard (user management)
 - [ ] Implement Framer Motion for transitions and micro-interactions
 
-### Phase 6: Deployment & Optimization
+### Phase 6: Deployment
 - [ ] Migrate database to Supabase
+- [ ] Update environment variables for production
 - [ ] Deploy Backend to Render
 - [ ] Deploy Frontend to Vercel
 
@@ -167,30 +172,59 @@ These are the routes to be built in Node.js.
 - currentUser
 - token
 - role
+- isLoading (for the initial GET /auth/me call on refresh)
 
 **Actions:**
-- login
+- setCredentials (login or register success)
 - logout
-- setCredentials
+- setLoading
 
 ### Usage
-- Persist authentication state
+- On app load: read token from localStorage, call GET /auth/me, dispatch setCredentials
+- On 401 response anywhere in the app: dispatch logout, redirect to login
 - Conditionally render UI based on role:
   - Admin → Dashboard, user management controls
   - User → Standard blog features
+  - Guest → Read-only feed, login/register prompts
 
 ---
 
-## 6. UI Enhancements
+## 6. Frontend Architecture Notes
+
+### API Layer
+All HTTP calls will be centralized in a dedicated `src/api/` folder rather than
+scattered across components. Each feature has its own file:
+- `src/api/auth.ts`
+- `src/api/posts.ts`
+- `src/api/admin.ts`
+
+### Folder Structure (planned)
+```
+frontend/
+├── src/
+│   ├── api/
+│   ├── app/          <- Redux store setup
+│   ├── components/   <- Reusable UI components
+│   ├── features/     <- Redux slices (auth, posts)
+│   ├── layouts/      <- Route layouts
+│   ├── pages/        <- Page-level components
+│   ├── types/        <- Shared TypeScript types
+│   └── main.tsx
+```
+
+---
+
+## 7. UI Enhancements
 
 ### Icons (Lucide React)
-- Use consistent icon set across the app
-- Suggested usage:
-  - Navbar (Home, Profile, Admin)
-  - Buttons (Edit, Delete, Like, Reply)
-  - Alerts and notifications
+- Navbar (Home, Profile, Admin panel)
+- Buttons (Edit, Delete, Like, Reply)
+- Alerts and notifications
+- Empty states
 
 ### UX Considerations
-- Show/hide actions based on role
-- Provide clear feedback for unauthorized actions
-- Thread replies visually under their parent comment
+- Show/hide actions based on role and ownership
+- Optimistic UI for likes (update count instantly, reconcile with server)
+- Thread replies visually indented under their parent comment
+- Skeleton loaders during data fetching
+- Clear feedback for unauthorized actions

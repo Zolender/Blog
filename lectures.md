@@ -1,7 +1,7 @@
 # Z-Tales — Lecture Notes
 
 A running document of concepts, decisions, and hard lessons from building this project.
-To be updated at the end of every phase.
+Updated at the end of every phase.
 
 ---
 
@@ -9,9 +9,9 @@ To be updated at the end of every phase.
 
 ### The PostgreSQL Connection Pool
 
-A `Pool` manages multiple persistent database connections. The server does not open and close
-a connection on every request — that would be expensive. Instead, the pool keeps a set of
-connections alive and lends them out as needed.
+A `Pool` manages multiple persistent database connections. The server does not open and
+close a connection on every request — that would be expensive. Instead, the pool keeps
+a set of connections alive and lends them out as needed.
 
 `pool.on("connect")` fires only when a brand new physical connection is established.
 Once the pool has live connections it reuses them silently. This is why the connect log
@@ -27,8 +27,8 @@ database level, not the application level. The database is the last line of defe
 ### The CHECK constraint and PostgreSQL quoting rules
 
 In PostgreSQL:
-- Double quotes `"value"` mean an **identifier** (column name, table name)
-- Single quotes `'value'` mean a **string literal**
+- Double quotes `"value"` mean an identifier (column name, table name)
+- Single quotes `'value'` mean a string literal
 
 Writing `CHECK (role IN ("user", "admin"))` tells PostgreSQL to look for columns named
 `user` and `admin`, which do not exist. The correct syntax is:
@@ -84,7 +84,8 @@ tsx watch src/index.ts
 ### `dotenv` and the `--env-file` flag
 
 `dotenv.config()` resolves the `.env` path relative to `process.cwd()` — the directory
-from which the command was run, not the file that called it. This makes it fragile.
+from which the command was run, not the file that called it. This makes it fragile,
+especially on Windows where path resolution can behave inconsistently.
 
 Node.js v20.6+ provides a built-in alternative that loads the file before any code runs:
 
@@ -128,6 +129,19 @@ The flow:
 2. Client sends `Authorization: Bearer <token>` on every subsequent request
 3. `authMiddleware` verifies the token and stamps `req.user` with the decoded payload
 4. Route handlers read `req.user` freely
+
+### GET /auth/me and session rehydration
+
+When a user refreshes the page, React re-mounts from scratch. Redux state is gone.
+The token persisted in localStorage is the only thing that survives.
+
+On every app load, the frontend reads the token from localStorage and calls
+`GET /auth/me`. The server verifies the token and returns the full user object.
+The frontend dispatches this into Redux, restoring the session silently.
+
+If the token is expired or invalid, the server returns 401. The frontend catches
+this, clears the token from localStorage, and treats the user as a guest.
+This is the correct pattern — the server is always the source of truth.
 
 ### Extending Express's Request type
 
@@ -195,7 +209,69 @@ The outer function captures `roles` in a closure. The inner function has access 
 when Express eventually calls it.
 
 ---
-## Phase 3 — Admin & Comment Replies
+
+## Phase 3 — Core Features
+
+### SQL JOINs and why we use them
+
+Instead of making separate queries to get a post and then its author, a `JOIN` fetches
+both in a single round trip to the database:
+
+```sql
+SELECT posts.*, users.username AS author_username
+FROM posts
+JOIN users ON posts.author_id = users.id
+```
+
+`LEFT JOIN` is used for likes and comments because a post with zero likes or comments
+should still be returned — an `INNER JOIN` would exclude it.
+
+### COUNT with DISTINCT
+
+```sql
+COUNT(DISTINCT likes.user_id) AS like_count
+COUNT(DISTINCT comments.id) AS comment_count
+```
+
+When joining multiple tables that have a one-to-many relationship with the main table,
+rows multiply. `DISTINCT` ensures we count unique entries, not duplicates introduced
+by the join.
+
+### COALESCE for partial updates
+
+```sql
+SET title = COALESCE($1, title)
+```
+
+`COALESCE` returns the first non-null value. If `$1` is null (the field was not sent
+in the request), it falls back to the existing column value. This allows a client to
+send only the fields they want to update without overwriting the rest with nulls.
+
+### The like toggle pattern
+
+A single endpoint handles both liking and unliking. The server checks the database
+for an existing like record. If it exists, it deletes it. If it does not, it inserts one.
+
+This is cleaner than separate `/like` and `/unlike` routes. The client does not need
+to track state. The database is always the source of truth.
+
+### RBAC enforcement at the controller level
+
+For post edit and delete, ownership is checked inside the controller:
+
+```typescript
+const isAuthor = post.author_id === req.user.id;
+const isAdmin = req.user.role === "admin";
+
+if (!isAuthor && !isAdmin) {
+  res.status(403).json({ message: "Not allowed" });
+  return;
+}
+```
+
+The `roleMiddleware` alone is not sufficient here because the rule is not just about
+role — it is about ownership. An admin can edit any post. A user can only edit their own.
+This logic requires knowing both the requester's identity and the resource's owner.
 
 ### Self-referencing foreign keys
 
@@ -214,8 +290,8 @@ No extra application logic required.
 
 When adding a reply, it is not enough to check that the parent comment exists.
 You must also verify it belongs to the same post the client is replying to.
-Without this check, a client could craft a request that links a reply to an
-unrelated post, corrupting the data.
+Without this check, a client could craft a request that links a reply across posts,
+corrupting the data structure.
 
 ```typescript
 const parentExists = await pool.query(
@@ -233,15 +309,12 @@ apply them once at the router level:
 router.use(protect, restrictTo("admin"));
 ```
 
-Every route registered on that router after this line inherits both middleware.
-Cleaner and eliminates the risk of forgetting to protect a route.
+Every route registered after this line inherits both middleware automatically.
 
 ### Guarding against self-targeting in admin operations
 
 An admin should not be able to delete their own account or change their own role.
 If they could, they might accidentally remove the last admin, locking everyone out.
-This is checked inside the controller by comparing the target user's id
-against `req.user.id`:
 
 ```typescript
 if (Number(id) === req.user!.id) {
@@ -252,9 +325,121 @@ if (Number(id) === req.user!.id) {
 
 ---
 
-## Still To Build
+## Phase 4 — Hardening
 
-- Hardening pass (rate limiting, helmet, pagination, indexes, GET /auth/me)
-- Frontend: React, Redux Toolkit, React Router v7, Tailwind CSS, Framer Motion
-- Supabase migration
-- Render + Vercel deployment
+### Rate limiting
+
+Auth routes are the most vulnerable surface — a bot can attempt thousands of
+password combinations per minute without rate limiting. `express-rate-limit`
+solves this:
+
+```typescript
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: { message: "Too many attempts, please try again later" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use("/auth", authLimiter, authRoutes);
+```
+
+A `429 Too Many Requests` response is returned when the limit is exceeded.
+`standardHeaders: true` sends `RateLimit-*` headers so clients know their remaining quota.
+
+### Security headers with Helmet
+
+`helmet()` sets a collection of HTTP response headers that protect against common
+web vulnerabilities — clickjacking, MIME type sniffing, cross-site scripting via
+headers, and others. It is one line and has no downside:
+
+```typescript
+app.use(helmet());
+```
+
+Always apply it before your routes.
+
+### Pagination
+
+Returning every row from a table in a single query is a server killer at scale.
+Pagination limits the result set:
+
+```sql
+LIMIT $1 OFFSET $2
+```
+
+Where `OFFSET = (page - 1) * limit`. The response always includes a `pagination`
+object so the frontend never has to calculate page state itself:
+
+```json
+{
+  "currentPage": 1,
+  "totalPages": 12,
+  "totalPosts": 114,
+  "hasNextPage": true,
+  "hasPrevPage": false
+}
+```
+
+Cap the maximum `limit` server-side. Never trust the client to be reasonable.
+
+### Promise.all for parallel queries
+
+When two queries do not depend on each other, run them in parallel:
+
+```typescript
+const [postsResult, countResult] = await Promise.all([
+  pool.query("SELECT ... LIMIT $1 OFFSET $2", [limit, offset]),
+  pool.query("SELECT COUNT(*) FROM posts"),
+]);
+```
+
+`Promise.all` fires both queries simultaneously and waits for both to finish.
+Running them sequentially would take twice as long for no reason.
+
+### Database indexes
+
+An index is a data structure the database maintains to allow fast lookups on a column.
+Without one, a query with `WHERE author_id = 5` reads every single row in the table.
+With one, it jumps directly to the matching rows.
+
+Create indexes on every foreign key column and every column used in `ORDER BY`:
+
+```sql
+CREATE INDEX idx_posts_author_id ON posts(author_id);
+CREATE INDEX idx_posts_created_at ON posts(created_at DESC);
+CREATE INDEX idx_comments_post_id ON comments(post_id);
+```
+
+The tradeoff: indexes slightly slow down writes (INSERT/UPDATE/DELETE) because the
+index must be updated too. For a read-heavy application like a blog, this is always
+worth it.
+
+---
+
+## Challenges Faced
+
+### The server would not start
+
+Root cause: `ts-node-dev` does not support ESM. Replacing it with `tsx` resolved the
+issue. Lesson: always verify that tooling supports your module system before choosing it.
+
+### `pool.on("connect")` never fired
+
+This was not a bug. The pg pool is lazy — it does not connect until the first query
+is executed. Waiting for a log that will never come is a misleading debugging strategy.
+The health check route with a real query is the correct verification method.
+
+### `dotenv` returning `undefined` for all variables
+
+The `.env` file existed and had correct content. The issue was that `dotenv.config()`
+resolves relative to `process.cwd()`, which on Windows behaved unexpectedly.
+The native `--env-file` flag bypasses this entirely by loading variables before
+any application code runs.
+
+### PostgreSQL password authentication intermittently failing
+
+`localhost` on Windows can resolve to a Unix socket (peer authentication) rather than
+TCP. Using `127.0.0.1` forces TCP and consistent password authentication behavior.
+The `--env-file` fix made this moot since the variables were not being loaded at all.
