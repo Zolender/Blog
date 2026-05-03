@@ -5,7 +5,7 @@ import { errorHandler } from "./middleware/errorMiddleware.js"
 import healthRoute from "./routes/healthRoute.js"
 import authRoutes from "./routes/authRoutes.js"
 import postRoutes from "./routes/postRoutes.js"
-
+import adminRoutes  from "./routes/adminRoutes.js"
 
 const app : Application = express()
 
@@ -17,6 +17,8 @@ app.use("/auth", authRoutes)
 app.use("/health", healthRoute)
 
 app.use("/posts", postRoutes)
+
+app.use("/admin", adminRoutes)
 
 
 
