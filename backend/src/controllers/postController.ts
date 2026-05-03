@@ -71,6 +71,7 @@ export const getPostById = async (req: Request, res: Response, next: NextFunctio
                     SELECT
                         comments.id,
                         comments.content,
+                        comments.parent_id,
                         comments.created_at,
                         users.id AS author_id,
                         users.username AS author_username,
