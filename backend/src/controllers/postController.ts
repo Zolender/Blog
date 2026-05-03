@@ -57,7 +57,7 @@ export const getPostById = async (req: Request, res: Response, next: NextFunctio
                     users.profile_pic AS author_profile_pic,
                     COUNT(DISTINCT likes.user_id) AS like_count
                 FROM posts
-                JOIN users ON posts.author_id = users.index
+                JOIN users ON posts.author_id = users.id
                 LEFT JOIN likes ON posts.id = likes.post_id
                 WHERE posts.id = $1
                 GROUP BY posts.id, users.id 

@@ -4,7 +4,7 @@ import dotenv from "dotenv"
 import { errorHandler } from "./middleware/errorMiddleware.js"
 import healthRoute from "./routes/healthRoute.js"
 import authRoutes from "./routes/authRoutes.js"
-
+import postRoutes from "./routes/postRoutes.js"
 
 
 const app : Application = express()
@@ -15,6 +15,8 @@ app.use(express.json())
 app.use("/auth", authRoutes)
 
 app.use("/health", healthRoute)
+
+app.use("/posts", postRoutes)
 
 
 
