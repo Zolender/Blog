@@ -35,3 +35,28 @@ export const deleteUser = async (req: authRequest, res: Response, next: NextFunc
         next(err)
     }
 }
+
+//changing the role of a User(/:id/role)
+export const updateUserRole = async (req: authRequest, res: Response, next: NextFunction)=>{
+    try{
+        const {id} = req.params
+        if(Number(id)===req.user!.id){
+            res.status(400).json({message: "You cannot change your own role"})
+            return
+        }
+        const parsed = roleSchema.safeParse(req.body)
+        if(!parsed.success){
+            const errors = parsed.error.issues.map(({path, message})=> ({path, message}))
+            return res.status(400).json({message: "Invalid role", errors})
+        }
+
+        const result = await pool.query(`UPDATE users SET role = $1 WHERE id = $2 RETURNING id, username, role`, [parsed.data.role, id])
+        if(result.rows.length === 0){
+            return res.status(404).json({message: "User not found"})
+        }
+
+        res.status(200).json({message: "Role updated successfully", user: result.rows[0]})
+    }catch(err){
+        next(err)
+    }
+}
