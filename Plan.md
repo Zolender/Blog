@@ -48,10 +48,12 @@ Before writing a single query, we must define how our data lives together.
 - author_id
 - content
 - created_at
+- parent_id
 
 **Relationships:**
 - Belongs to → Post
 - Belongs to → User
+- One-To-Many → Comments
 
 #### Likes
 **Attributes:**
