@@ -93,7 +93,7 @@ export const login = async (req: Request, res: Response, next: NextFunction)=>{
 //returns user info from the token, just a way to rehydrate the app state on refresh(/auth/me)
 export const getMe = async(req: authRequest, res: Response, next: NextFunction)=>{
     try{
-        const result = await pool.query(`SELECT id, username, email, role, bio, profile_pic, create_at FROM users WHERE id = $1`, [req.user!.id])
+        const result = await pool.query(`SELECT id, username, email, role, bio, profile_pic, created_at FROM users WHERE id = $1`, [req.user!.id])
         if(result.rows.length === 0){
             return res.status(404).json({message: "User not found"})
         }
