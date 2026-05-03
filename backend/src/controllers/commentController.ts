@@ -45,3 +45,28 @@ export const addComment = async (req: authRequest, res: Response, next: NextFunc
         next(err)
     }
 }
+
+//deleting a comment(will be using post id and comment id)
+export const deleteComment = async(req: authRequest, res: Response, next: NextFunction)=>{
+    try{
+        const {commentId} = req.params
+        const commentResult = await pool.query("SELECT * FROM comments WHERE id = $1", [commentId])
+
+        if(commentResult.rows.length=== 0){
+            return res.status(404).json({message: "Comment not found"})
+        }
+
+        const comment = commentResult.rows[0]
+        const isAuthor = comment.author_id === req.user!.id
+        const isAdmin = req.user!.role === "admin"
+
+        if(!isAuthor && !isAdmin){
+            return res.status(401).json({message: "Not allowed to delete this comment"})
+        }
+
+        await pool.query("DELETE FROM comments WHERE id=$1", [commentId])
+        res.status(200).json({message: "comment deleted successfully"})
+    }catch(err){
+
+    }
+}
