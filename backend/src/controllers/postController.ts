@@ -32,11 +32,11 @@ export const getAllPosts = async (req: Request, res: Response, next: NextFunctio
                     COUNT(DISTINCT comments.id) AS comment_count
                 FROM posts
                 JOIN users ON posts.author_id = users.id
-                LEFT JOIN likes ON posts.id = lkes.post_id
+                LEFT JOIN likes ON posts.id = likes.post_id
                 LEFT JOIN likes ON posts.id = likes.post_id
                 LEFT JOIN comments ON posts.id = comments.post_id
                 GROUP BY posts.id, users.id
-                ORDER BY posts.create_at DESC
+                ORDER BY posts.created_at DESC
                 LIMIT $1 OFFSET $2        
                 `, [limit, offset]),
                 pool.query("SELECT COUNT(*) FROM posts")
