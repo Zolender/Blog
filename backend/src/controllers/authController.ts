@@ -3,6 +3,7 @@ import { NextFunction, Request, Response } from "express";
 import pool from "../config/db.js";
 import bcrypt from "bcryptjs";
 import { signToken } from "../utils/jwt.js";
+import { authRequest } from "../types/index.js";
 
 
 const registerSchema = z.object({
@@ -84,6 +85,19 @@ export const login = async (req: Request, res: Response, next: NextFunction)=>{
                 role: user.role
             }
         })
+    }catch(err){
+        next(err)
+    }
+}
+
+//returns user info from the token, just a way to rehydrate the app state on refresh(/auth/me)
+export const getMe = async(req: authRequest, res: Response, next: NextFunction)=>{
+    try{
+        const result = await pool.query(`SELECT id, username, email, role, bio, profile_pic, create_at FROM users WHERE id = $1`, [req.user!.id])
+        if(result.rows.length === 0){
+            return res.status(404).json({message: "User not found"})
+        }
+        res.status(200).json({user: result.rows[0]})
     }catch(err){
         next(err)
     }
