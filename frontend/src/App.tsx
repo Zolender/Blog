@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from "./app/hooks";
 import { rehydrateAuth } from "./features/auth/authSlice";
 import { BrowserRouter, Route, Routes } from "react-router";
 import RootLayout from "./layouts/RootLayout";
-import FeedPage from "./pages/FeedPages";
+import FeedPage from "./pages/FeedPage";
 import PostPage from "./pages/PostPage";
 import GuestRoute from "./components/guestRout";
 import LoginPage from "./pages/LoginPage";
