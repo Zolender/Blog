@@ -110,6 +110,12 @@ Before writing a single query, we must define how our data lives together.
 - [x] Apply middleware to protected routes (Admin-only where required)
 - [x] Ownership checks inside controllers where role alone is insufficient
 
+### Frontend Enforcement
+- [x] ProtectedRoute component — redirects to /login if not authenticated
+- [x] GuestRoute component — redirects to / if already authenticated
+- [x] adminOnly prop on ProtectedRoute — redirects to / if not admin
+- [ ] Conditionally render edit/delete buttons based on ownership and role
+
 ---
 
 ## 4. Execution Roadmap (The Checklist)
@@ -145,17 +151,24 @@ Before writing a single query, we must define how our data lives together.
 - [x] Add `GET /auth/me` route
 
 ### Phase 5: Frontend Development (React + RTK)
-- [ ] Initialize React with Vite and Tailwind CSS
-- [ ] Install and configure Lucide React for icons
-- [ ] Set up React Router v7 (layouts and protected routes)
-- [ ] Configure Redux Toolkit `authSlice` (store user + role)
-- [ ] Call `GET /auth/me` on app load to rehydrate session
-- [ ] Implement protected routes based on role
-- [ ] Build global post feed with pagination controls
-- [ ] Build single post page with threaded comments
-- [ ] Build create/edit post forms
-- [ ] Build Admin Dashboard (user management)
-- [ ] Implement Framer Motion for transitions and micro-interactions
+- [x] Initialize React with Vite and Tailwind CSS v4
+- [x] Install Lucide React, Framer Motion, Redux Toolkit, React Router v7
+- [x] Configure Vite proxy (forward /api requests to backend)
+- [x] Define shared TypeScript types (`src/types/index.ts`)
+- [x] Build centralized API client (`src/api/client.ts`)
+- [x] Build API modules — auth, posts, admin (`src/api/`)
+- [x] Configure Redux store and typed hooks (`src/app/`)
+- [x] Build authSlice with rehydrateAuth async thunk
+- [x] Wire Redux Provider and session rehydration in main.tsx and App.tsx
+- [x] Build RootLayout with Navbar and Outlet
+- [x] Build ProtectedRoute and GuestRoute components
+- [x] Set up full React Router v7 route tree in App.tsx
+- [ ] Build Login and Register pages
+- [ ] Build Feed page with pagination
+- [ ] Build single Post page with threaded comments
+- [ ] Build Create and Edit post forms
+- [ ] Build Admin Dashboard
+- [ ] Apply Framer Motion transitions
 
 ### Phase 6: Deployment
 - [ ] Migrate database to Supabase
@@ -169,47 +182,53 @@ Before writing a single query, we must define how our data lives together.
 
 ### Auth Slice
 **State:**
-- currentUser
-- token
-- role
-- isLoading (for the initial GET /auth/me call on refresh)
+- user (User | null)
+- token (string | null)
+- isLoading (true until rehydration completes)
 
 **Actions:**
-- setCredentials (login or register success)
-- logout
-- setLoading
+- setCredentials — called after login or register
+- logout — clears user, token, and localStorage
+- rehydrateAuth (async thunk) — calls GET /auth/me on app load
 
 ### Usage
-- On app load: read token from localStorage, call GET /auth/me, dispatch setCredentials
-- On 401 response anywhere in the app: dispatch logout, redirect to login
+- On app load: read token from localStorage, call GET /auth/me, dispatch result into state
+- If GET /auth/me returns 401: clear token, treat as guest
 - Conditionally render UI based on role:
-  - Admin → Dashboard, user management controls
-  - User → Standard blog features
-  - Guest → Read-only feed, login/register prompts
+  - Admin → Dashboard link visible in Navbar, adminOnly routes accessible
+  - User → Write link visible, own post controls visible
+  - Guest → Login/Register links visible, feed readable
 
 ---
 
-## 6. Frontend Architecture Notes
+## 6. Frontend Architecture
 
 ### API Layer
-All HTTP calls will be centralized in a dedicated `src/api/` folder rather than
-scattered across components. Each feature has its own file:
+All HTTP calls go through a single configured client (`src/api/client.ts`).
+The client handles the base URL, attaches the Bearer token automatically,
+and parses errors uniformly. Feature-specific modules call the client:
 - `src/api/auth.ts`
 - `src/api/posts.ts`
 - `src/api/admin.ts`
 
-### Folder Structure (planned)
+### Vite Proxy
+In development, all `/api/*` requests are proxied to `http://localhost:5000`.
+Components never hardcode a port or host. In production, the environment
+variable is swapped and no component code changes.
+
+### Folder Structure
 ```
 frontend/
 ├── src/
-│   ├── api/
-│   ├── app/          <- Redux store setup
-│   ├── components/   <- Reusable UI components
-│   ├── features/     <- Redux slices (auth, posts)
-│   ├── layouts/      <- Route layouts
-│   ├── pages/        <- Page-level components
-│   ├── types/        <- Shared TypeScript types
-│   └── main.tsx
+│   ├── api/            <- HTTP call modules
+│   ├── app/            <- Redux store and typed hooks
+│   ├── components/     <- Reusable UI (Navbar, ProtectedRoute, GuestRoute)
+│   ├── features/       <- Redux slices (auth)
+│   ├── layouts/        <- RootLayout (Navbar + Outlet)
+│   ├── pages/          <- Page-level components
+│   ├── types/          <- Shared TypeScript interfaces
+│   ├── App.tsx         <- Router definition
+│   └── main.tsx        <- Entry point, Redux Provider
 ```
 
 ---
@@ -228,3 +247,4 @@ frontend/
 - Thread replies visually indented under their parent comment
 - Skeleton loaders during data fetching
 - Clear feedback for unauthorized actions
+- Framer Motion page transitions and micro-interactions

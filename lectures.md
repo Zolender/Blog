@@ -418,6 +418,159 @@ worth it.
 
 ---
 
+## Phase 5 — Frontend Foundation
+
+### Why two terminals
+
+The frontend (Vite, port 5173) and the backend (Express, port 5000) are separate
+processes. Both must be running at the same time during development. The frontend
+never serves data — it only displays it. All data comes from the backend.
+
+### The Vite proxy
+
+During development, hardcoding `http://localhost:5000` into every API call would be
+a problem — that URL only works locally. Instead, Vite acts as a middleman:
+
+```typescript
+server: {
+  proxy: {
+    '/api': {
+      target: 'http://localhost:5000',
+      changeOrigin: true,
+      rewrite: (path) => path.replace(/^\/api/, ''),
+    },
+  },
+}
+```
+
+Every request to `/api/posts` from the frontend is transparently forwarded to
+`http://localhost:5000/posts`. Components only ever reference `/api/...` — they
+never know or care what port the backend is on. In production, you swap the
+target once in the environment config and nothing else changes.
+
+### The centralized API client
+
+Instead of writing `fetch('http://localhost:5000/...', { headers: { Authorization: ... } })`
+in every component, all HTTP logic lives in one place:
+
+```typescript
+const request = async <T>(endpoint: string, options: RequestInit = {}): Promise<T> => {
+  const token = localStorage.getItem('token');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+  const response = await fetch(`/api${endpoint}`, { ...options, headers });
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message);
+  }
+  return response.json();
+};
+```
+
+The token is read from localStorage and attached automatically. Errors are parsed
+uniformly. If you ever need to change how requests work — adding a header, changing
+error handling — you change it once here and every call in the app benefits.
+
+### Redux Toolkit and the authSlice
+
+Redux is a global state container. The authSlice manages everything related to
+who is currently logged in. Its state shape:
+
+```typescript
+{
+  user: User | null,   // the logged-in user object
+  token: string | null, // the JWT from the backend
+  isLoading: boolean   // true while rehydration is in progress
+}
+```
+
+`isLoading` starts as `true`. The app renders a loading screen until rehydration
+completes. This prevents a flash where the user briefly sees the wrong page before
+the auth check finishes.
+
+### createAsyncThunk
+
+`createAsyncThunk` is Redux Toolkit's way of handling async operations — things
+that go out to a server and come back later. It automatically generates three
+action types: `pending`, `fulfilled`, and `rejected`.
+
+```typescript
+export const rehydrateAuth = createAsyncThunk('auth/rehydrate', async () => {
+  const { user } = await authApi.getMe();
+  return user;
+});
+```
+
+In `extraReducers`, we handle each case:
+- `pending` → set isLoading to true
+- `fulfilled` → store the user, set isLoading to false
+- `rejected` → clear everything (bad token), set isLoading to false
+
+### Typed Redux hooks
+
+The standard `useSelector` and `useDispatch` from react-redux do not know the
+shape of your store. Every component would need to import `RootState` manually.
+The typed wrappers solve this once:
+
+```typescript
+export const useAppDispatch = () => useDispatch<AppDispatch>();
+export const useAppSelector = <T>(selector: (state: RootState) => T) =>
+  useSelector(selector);
+```
+
+Now components just import `useAppSelector` and get full type safety on the
+state without any extra imports.
+
+### Layouts in React Router v7
+
+A layout is a component that wraps a group of routes. It renders shared UI —
+the navbar, a sidebar, a footer — and uses `<Outlet />` as a placeholder for
+whichever child page is currently active.
+
+```typescript
+function RootLayout() {
+  return (
+    <div>
+      <Navbar />
+      <main>
+        <Outlet /> {/* the current page renders here */}
+      </main>
+    </div>
+  )
+}
+```
+
+All routes nested inside `<Route element={<RootLayout />}>` automatically get
+the navbar without you having to add it to every page individually.
+
+### ProtectedRoute and GuestRoute — frontend access control
+
+The backend protects data. The frontend protects navigation. Both are necessary.
+
+ProtectedRoute checks Redux state. If there is no user, it redirects to `/login`.
+If `adminOnly` is set and the user is not an admin, it redirects to `/`.
+GuestRoute is the inverse — if a user is already logged in, redirect them away
+from the login and register pages.
+
+The `replace` prop on `<Navigate>` is important. It replaces the current history
+entry instead of adding a new one. Without it, hitting the back button after a
+redirect would return the user to the page that redirected them, creating a loop.
+
+```typescript
+if (!user) return <Navigate to="/login" replace />
+```
+
+### Why "Not logged in" is the correct initial state
+
+On first load with no token in localStorage, the rehydrateAuth thunk calls
+`GET /auth/me` with no Authorization header. The backend returns 401. The
+`rejected` case runs, clears state, and the app correctly shows the guest view.
+This is not an error — it is the expected behaviour for an unauthenticated user.
+
+---
+
 ## Challenges Faced
 
 ### The server would not start
