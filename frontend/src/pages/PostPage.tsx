@@ -68,6 +68,69 @@ const PostPage = () => {
         }
     }
 
+    //whenever an admin or the author deletes a posts
+    const handleDeletePost = async() =>{
+        if(!confirm("Are you sure you want to delete this post?"))return
+        try{
+            await postsApi.delete(Number(id))
+            navigate("/")
+        }catch(err){
+            alert(err instanceof Error ? err.message: "Failed to delete post")
+        }
+    }
+
+    //top level comments handler
+    const handleAddComment = async(e: React.SubmitEvent)=> {
+        e.preventDefault()
+        if(!commentContent.trim())return
+
+        setCommentLoading(true)
+        setCommentError(null)
+
+        try{
+            const data = await postsApi.addComment(Number(id), {content: commentContent})
+            //isntead of refetching everything again so that the comment get displayed, we just append it to the local list
+            setComments((prev)=> [...prev, data.comment])
+            setCommentContent("")
+        }catch(err){
+            setCommentError(err instanceof Error? err.message: "Failed to add comment")
+        }finally{
+            setCommentLoading(false)
+        }
+    }
+
+
+    //and for the case one is to reply to a comment, here is an handler
+    const handleAddReply = async (e: React.SubmitEvent, parentId: number)=>{
+        e.preventDefault()
+        if(!replyContent.trim())return
+        setReplyLoading(true)
+
+        try{
+            const data = await postsApi.addComment(Number(id), {content: replyContent, parent_id: parentId})
+            setComments((prev)=> [...prev, data.comment])
+            setReplyContent("")
+            setReplyingTo(null)
+        }catch(err){
+            alert(err instanceof Error? err.message: "Failed to add reply")
+        }finally{
+            setReplyLoading(false)
+        }
+    }
+
+
+    //deleting a comment, would need an handler as well
+    const handleDeleteComment = async (commentId: number)=>{
+        if(!confirm("Delet this comment?"))return
+        try{
+            await postsApi.deleteComment(Number(id), commentId)
+            //we would remove it from the local state without refetching again
+            setComments((prev)=> prev.filter((c)=> c.id!==commentId))
+        }catch(err){
+            alert(err instanceof Error? err.message: "Failed to delete comment")
+        }
+    }
+    
 
     return (
         <>PostPage</>
