@@ -1,9 +1,9 @@
 
 
-const createPostPage = () => {
+const CreatePostPage = () => {
     return (
-        <>createPostPage</>
+        <>CreatePostPage</>
     );
 }
  
-export default createPostPage;
+export default CreatePostPage;
