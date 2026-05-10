@@ -65,9 +65,33 @@ const FeedPage = () => {
                     <Link to="/posts/new" className="mt-4 inline-block text-sm text-blue-600 hover:underline">Write a post</Link>
                 </div>
             ):(
-                <div className="flex flex-col gap-4">
-                    {posts.map(post=> <PostCard key={post.id} post={post}/>)}
-                </div>
+                <>
+                    <div className="flex flex-col gap-4">
+                        {posts.map(post=> <PostCard key={post.id} post={post}/>)}
+                    </div>
+
+                     {/* a way of dealing wit the pagination */}
+                    {pagination && pagination.totalPages > 1 && (
+                        <div className="flex imtes-center justify-center gap-2 pt-4">
+                            <button onClick={()=> handlePageChange(currentPage - 1)} disabled={!pagination.hasPrevPage} className="pz-3 py1 text-sm border border-gray-300 rounded-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                                Previous
+                            </button>
+                            {/* creating the numbered buttons to go from a page to another */}
+                            
+                            {Array.from({length: pagination.totalPages}, (_, i)=> i+1).map(page=>(
+                                <button key={page} onClick={()=> handlePageChange(page)} className={`px-3 py-1 text-sm border rounded-sm ${page===currentPage ? "bg-blue-600 text-white border-blue-600" : "border-gray-300 hover:bg-gray-50"}`}>{page}</button>
+                            ))}
+
+                            <button onClick={()=> handlePageChange(currentPage + 1)} disabled={!pagination.hasNextPage} className="px-3 py-1 text-sm border border-gray-300 rounded-sm hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Next</button>
+                        </div>
+                    )}
+                    {/* a small summary section  */}
+                    {pagination && (
+                        <p className="text-center text-xs text-gray-400">
+                            Showing {(currentPage - 1) * pagination.limit + 1}-{Math.min(currentPage * pagination.limit, pagination.totalPosts)} of {" "} {pagination.totalPosts} posts
+                        </p>
+                    )}
+                </>
             )}
         </div>
     );
