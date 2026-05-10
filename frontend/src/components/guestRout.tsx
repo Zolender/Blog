@@ -16,3 +16,5 @@ function GuestRoute({children}: Props){
 
     return <>{children}</>
 }
+
+export default GuestRoute
