@@ -32,7 +32,7 @@ const RegisterPage = () => {
     }
 
     return (
-        <div className="mx-auto mt-16">
+        <div className="max-w-md mx-auto mt-16">
             <h1 className="text-2xl font-bold text-gray-900 mb-6">Create an account</h1>
 
             {error && (
