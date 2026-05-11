@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { useAppSelector } from "../app/hooks";
 import { useEffect, useState } from "react";
 import type { Post, Comment } from "../types";
@@ -130,10 +130,82 @@ const PostPage = () => {
             alert(err instanceof Error? err.message: "Failed to delete comment")
         }
     }
-    
 
+    //managing ownership cases(comments and post)
+
+    const canModifyPost = user && post && (user.id===post.author_id || user.role === "admin")
+    const canModifyComment = (comment: Comment)=>{
+        return user && (user.id === comment.author_id || user.role==="admin")
+    }
+
+    //way tp get to separate top-level comments from reply ones, threading in a sort
+    const topLevelComments = comments.filter((c)=> c.parent_id === null)
+    const getReplies = (commentId: number)=> comments.filter((c)=> c.parent_id === commentId)
+
+    if(isLoading){
+        return (
+            <div className="flex justify-center py-20">
+                <p className="text-gray-400 text-sm">Loading Post...</p>
+            </div>
+        )
+    }
+
+    if(error || !post){
+        return (
+            <div className="flex justify-center py-20">
+                <p className="text-red-500 text-sm">{error?? "Post not found"}</p>
+            </div>
+        )
+    }
+    
     return (
-        <>PostPage</>
+        <div className="flex flex-col gap-8 max-w-2xl mx-auto">
+            <div className="flex flex-col gap3">
+                {post.banner_image && (
+                    <img src={post.banner_image} alt={post.title} className=" w-full h-64 object-cover rounded-lg" />
+                )}
+                <h1 className="text-3xl font-bold text-gray-900">{post.title}</h1>
+                
+                <div className="flex items-center justify-between text-sm text-gray-500">
+                    <span>
+                        by <span className="font-medium text-gray-700">{post.author_username}</span>
+                        {" . "}
+                        {new Date(post.created_at).toLocaleDateString()}
+                    </span>
+
+                    {/* may edit if author or admin */}
+                    {canModifyPost && (
+                        <div className="flex items-center gap-3">
+                            <Link to={`/posts/${post.id}/edit`} className="text-sm text-blue-600 hover:underline">Edit</Link>
+                            <button onClick={handleDeletePost} className="text-red-500 hover:underline text-sm">Delete</button> 
+                        </div>
+                    )}
+                </div>
+            </div>
+        
+        {/* the body */}
+            <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">{post.content}</div>
+            <div className="flex items-center gap-2">
+                <button 
+                    onClick={handleLike}
+                    className={`px-4 py1.5 rounded-sm text-sm font-medium transition-colors ${liked ? "bg-blue-600 text-white border-blue-600": "border-gray-300 text-gray-600 hover:border-blue-400"}`}    
+                >
+                    {liked? "liked" : "like"}
+                </button>
+                <span className="text-sm text-gray-500">{likeCount} likes</span>
+            </div>
+            <hr className="border-gray-200"/>
+            {/* Comments section */}
+
+            <div className="flex flex-col gap-6">
+                <h2 className="text-lg font-semibold text-gray-900">Comments ({topLevelComments.length})</h2>
+            </div>
+
+            {/* a comment form for logged in users */}
+            {user && (
+                
+            )}
+        </div>
     );
 }
  
