@@ -3,6 +3,7 @@ import { useAppSelector } from "../app/hooks";
 import { useEffect, useState } from "react";
 import type { Post, Comment } from "../types";
 import { postsApi } from "../api/posts";
+import CommentItem from "../components/CommentItem";
 
 
 const PostPage = () => {
@@ -202,8 +203,77 @@ const PostPage = () => {
             </div>
 
             {/* a comment form for logged in users */}
-            {user && (
+            {user ? (
+                <form onSubmit={handleAddComment} className="flex flex-col gap-2">
+                    <textarea value={commentContent} onChange={(e)=> setCommentContent(e.target.value)}  placeholder="Write a comment..." rows={3} className="border border-gray-300 rounded-sm placeholder-zinc-300 py-2 text-sm resize-none focus:ring-2 focus:ring-blue-500"/>
                 
+                    {commentError && (
+                        <p className="text-red-500 text-xs">{commentError}</p>
+                    )}
+                    <button type="submit" disabled={commentLoading || !commentContent.trim()} className="self-end px-4 py-1.5 bg-blue-600 text-white text-sm rounded-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                        {commentLoading? "Posting..." : "Post comment"}
+                    </button>
+                </form>
+            ): (
+                <p className="text-sm text-gray-500">
+                    <Link to="/login">Login</Link>{" "}to leave a comment.
+                </p>
+            )}
+
+            {/* list of comments */}
+            {topLevelComments.length===0? (
+                <p className="text-sm text-gray-400">No comments yet.</p>
+            ):(
+                <div className="flex flex-col gap-4">
+                    {topLevelComments.map((comment)=>(
+                        <div className="flex flex-col gap-2" key={comment.id}>
+                            {/* top level components first */}
+                            <CommentItem
+                                comment={comment}
+                                canModify={!!canModifyComment(comment)}
+                                onDelete={()=> handleDeleteComment(comment.id)}
+                                onReply={()=> {
+                                    setReplyingTo(replyingTo=== comment.id? null : comment.id)
+                                    setReplyContent("")
+                                }}
+                                showReplyButton={!!user}
+                            />
+
+                            {/* a reply form in case the comment is being replied to */}
+                            { replyingTo === comment.id && (
+                                <form onSubmit={(e)=> handleAddReply(e, comment.id)} className="ml-8 flex flex-col gap-2">
+                                    <textarea 
+                                        value={replyContent}
+                                        onChange={(e)=> setReplyContent(e.target.value)}
+                                        placeholder={`Replying to ${comment.author_username}...`}
+                                        rows={2}
+                                        className="border border-gray-300 rounded-sm px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+
+                                    <div className="flex gap-2 self-end">
+                                        <button type="button" onClick={()=> setReplyingTo(null)}>Cancel</button>
+                                        <button type="submit" disabled={replyLoading || !replyContent.trim()} className="px-4 py-1 bg-blue-600 text-white text-sm rounded-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                                            {replyLoading? "Posting...": "Reply"}
+                                        </button>
+                                    </div>
+                                </form>
+                                )}
+
+                                {/* we would indent replies under their parent, creating the thread view or feeling */}
+                                {getReplies(comment.id).map(reply=>(
+                                    <div className="ml-8" key={reply.id}>
+                                        <CommentItem
+                                            comment={reply}
+                                            canModify={!!canModifyComment(reply)}
+                                            onDelete={() => handleDeleteComment(reply.id)}
+                                            // Replies cannot be replied to so...
+                                            showReplyButton={false}
+                                        />
+                                    </div>
+                                ))}
+                        </div>
+                    ))}
+                </div>
             )}
         </div>
     );
