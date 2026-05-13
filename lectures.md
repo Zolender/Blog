@@ -448,6 +448,10 @@ Every request to `/api/posts` from the frontend is transparently forwarded to
 never know or care what port the backend is on. In production, you swap the
 target once in the environment config and nothing else changes.
 
+A common mistake: writing `http://localhost/5000` with a slash instead of a colon
+before the port. Vite will not warn you — it will silently proxy to the wrong address
+and every request will fail. Always use `http://localhost:5000`.
+
 ### The centralized API client
 
 Instead of writing `fetch('http://localhost:5000/...', { headers: { Authorization: ... } })`
@@ -480,9 +484,9 @@ who is currently logged in. Its state shape:
 
 ```typescript
 {
-  user: User | null,   // the logged-in user object
+  user: User | null,    // the logged-in user object
   token: string | null, // the JWT from the backend
-  isLoading: boolean   // true while rehydration is in progress
+  isLoading: boolean    // true while rehydration is in progress
 }
 ```
 
@@ -504,9 +508,9 @@ export const rehydrateAuth = createAsyncThunk('auth/rehydrate', async () => {
 ```
 
 In `extraReducers`, we handle each case:
-- `pending` → set isLoading to true
-- `fulfilled` → store the user, set isLoading to false
-- `rejected` → clear everything (bad token), set isLoading to false
+- `pending` — set isLoading to true
+- `fulfilled` — store the user, set isLoading to false
+- `rejected` — clear everything (bad or missing token), set isLoading to false
 
 ### Typed Redux hooks
 
@@ -571,6 +575,185 @@ This is not an error — it is the expected behaviour for an unauthenticated use
 
 ---
 
+## Phase 5 — Pages
+
+### Controlled inputs and local form state
+
+Every input in the Login, Register, Create, and Edit forms is a controlled input.
+This means React owns the value — not the browser. The pattern always looks like this:
+
+```typescript
+const [email, setEmail] = useState('')
+
+<input
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+/>
+```
+
+The input value is always what is in state. The onChange handler updates state on
+every keystroke. This gives you full control — you can read, validate, or transform
+the value at any point before submitting.
+
+### e.preventDefault() on form submit
+
+```typescript
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault()
+  ...
+}
+```
+
+Without this line, submitting a form causes a full browser page reload — the
+default HTML behaviour. In a React single-page application, a page reload wipes
+all state and Redux. `preventDefault` stops the browser and lets your JavaScript
+handler take over completely.
+
+### The isLoading flag and disabled state
+
+Every form has an `isLoading` state. While a request is in flight, the submit
+button is disabled. This prevents the user from submitting the same form twice
+and sending duplicate requests to the backend.
+
+```typescript
+<button disabled={isLoading}>
+  {isLoading ? 'Saving...' : 'Submit'}
+</button>
+```
+
+The button label also changes to give the user feedback that something is happening.
+
+### Not resetting isLoading to false on success
+
+On a successful form submission, `navigate()` is called immediately. The component
+unmounts. If you tried to call `setIsLoading(false)` after that, React would warn
+you about updating state on an unmounted component. So we only reset isLoading in
+the catch block — when the component stays mounted because the request failed.
+
+### useEffect dependency array
+
+`useEffect` runs after every render by default. The dependency array controls when
+it runs:
+
+```typescript
+useEffect(() => {
+  fetchPost()
+}, [id])  // only re-runs when `id` changes
+```
+
+- Empty array `[]` — runs once on mount only
+- `[id]` — runs on mount and whenever `id` changes
+- No array — runs after every single render (almost never what you want)
+
+In the Feed page, `[currentPage]` as the dependency means the fetch re-runs
+automatically whenever the user clicks a page number. No manual wiring required.
+
+### Optimistic UI for likes
+
+When the user clicks Like, the UI updates instantly — before the server responds.
+This makes the app feel fast and responsive. The previous state is saved first so
+it can be rolled back if the server call fails:
+
+```typescript
+const wasLiked = liked
+const prevCount = likeCount
+
+setLiked(!wasLiked)
+setLikeCount(wasLiked ? likeCount - 1 : likeCount + 1)
+
+try {
+  await postsApi.toggleLike(Number(id))
+} catch {
+  setLiked(wasLiked)      // roll back
+  setLikeCount(prevCount) // roll back
+}
+```
+
+This pattern is called optimistic UI. It is standard for low-stakes interactions
+where failures are rare and the cost of a brief wrong state is low.
+
+### Appending to local state instead of refetching
+
+After adding a comment, the new comment is appended directly to the local array:
+
+```typescript
+setComments((prev) => [...prev, data.comment])
+```
+
+The server already returned the new comment in the response. Making a full refetch
+of the post and all comments just to display one new item would be wasteful. Use
+the data you already have.
+
+### Threading comments with flat data
+
+The backend returns comments as a flat array. The frontend structures them into
+threads without any recursive function:
+
+```typescript
+const topLevelComments = comments.filter((c) => c.parent_id === null)
+const getReplies = (commentId: number) =>
+  comments.filter((c) => c.parent_id === commentId)
+```
+
+This works because we deliberately limit threading to one level. Replies cannot
+be replied to. Unlimited nesting becomes visually unmanageable and the flat
+filter approach breaks down. One level of threading is the right product decision
+for a blog.
+
+### Shared components vs duplicated markup
+
+The Create and Edit post pages use the exact same form. Rather than writing the
+form markup twice and maintaining two copies, the form UI lives in one `PostForm`
+component. The differences — initial values, submit label, submit handler — are
+passed as props.
+
+The rule is: extract a component when the same markup would appear in two places.
+Do not extract it before that point — you cannot know yet what shape the shared
+interface should take.
+
+```typescript
+// Create — no initial values
+<PostForm onSubmit={handleSubmit} submitLabel="Publish" ... />
+
+// Edit — pre-filled with existing post data
+<PostForm initialValues={{ title, content, banner_image }} submitLabel="Save changes" ... />
+```
+
+### Conditional spreading for optional fields
+
+```typescript
+await postsApi.create({
+  title: values.title,
+  content: values.content,
+  ...(values.banner_image && { banner_image: values.banner_image }),
+})
+```
+
+`banner_image` is optional. If the user left it blank, we do not want to send an
+empty string to the backend — the backend's Zod schema validates it as a URL and
+would reject it. The conditional spread `...(condition && { key: value })` only
+adds the field to the object if the condition is truthy. Empty string is falsy,
+so a blank banner image field is simply omitted from the request.
+
+### Double ownership check — backend and frontend
+
+The backend always enforces ownership. A request to edit someone else's post will
+get a 403 regardless of what the frontend does. But the frontend also checks:
+
+```typescript
+if (user.id !== fetchedPost.author_id && user.role !== 'admin') {
+  navigate('/')
+  return
+}
+```
+
+This is not security — it is UX. Without the frontend check, a non-owner who
+manually navigates to `/posts/5/edit` would load the full form, fill it out,
+hit Save, and only then get a 403 error back. The frontend check gives them
+immediate feedback before they waste any time.
+
+---
+
 ## Challenges Faced
 
 ### The server would not start
@@ -596,3 +779,11 @@ any application code runs.
 `localhost` on Windows can resolve to a Unix socket (peer authentication) rather than
 TCP. Using `127.0.0.1` forces TCP and consistent password authentication behavior.
 The `--env-file` fix made this moot since the variables were not being loaded at all.
+
+### Vite proxy not forwarding requests
+
+The target URL was written as `http://localhost/5000` — a slash before the port
+instead of a colon. Vite proxied to the wrong address silently. Every API call
+returned a proxy error. The fix was a single character: `http://localhost:5000`.
+Lesson: always check the exact format of URLs. A typo here produces no compile
+error and no obvious warning — just broken network requests.
