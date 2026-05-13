@@ -27,8 +27,9 @@ const AdminPage = () => {
             }finally{
                 setIsLoading(false)
             }
-            fetchUsers()
         }
+            fetchUsers()
+
     }, [])
 
 
