@@ -75,6 +75,20 @@ const AdminPage = () => {
     if(error){
         return (
             <div className="flex justify-center py-20">
+                <p className="text-red-500 text-sm">{error}</p>
+            </div>
+            )
+        }
+
+
+
+
+
+
+
+
+        return (
+            <div className="flex justify-center py-20">
                 <div className="flex items-center justify-between">
                     <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
                     <span className="text-sm text-gray-500">{users.length} users total</span>
@@ -154,13 +168,5 @@ const AdminPage = () => {
     }
     
 
-
-
-
-
-    return (
-        <>/</>
-    );
-}
  
 export default AdminPage;
