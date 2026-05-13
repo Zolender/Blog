@@ -32,6 +32,26 @@ const AdminPage = () => {
     }, [])
 
 
+    const handleDelete = async (targetUser: User)=>{
+        if(!confirm(`Are you sure you want to delete ${targetUser.username}? This operation isn't reversible`))return
+        
+        setDeletingId(targetUser.id)
+        
+        try{
+            await adminApi.deleteUser(targetUser.id)
+            //without refreshing set the userlist to... u know what i mean
+            setUsers((prev)=> prev.filter(user=> user.id!==targetUser.id))
+        }catch(err){
+            alert(err instanceof Error? err.message : "Failed to delete user")
+        }finally{
+            setDeletingId(null)
+        }
+    
+    }
+    
+
+
+
 
 
     return (
