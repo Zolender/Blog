@@ -114,7 +114,7 @@ Before writing a single query, we must define how our data lives together.
 - [x] ProtectedRoute component — redirects to /login if not authenticated
 - [x] GuestRoute component — redirects to / if already authenticated
 - [x] adminOnly prop on ProtectedRoute — redirects to / if not admin
-- [ ] Conditionally render edit/delete buttons based on ownership and role
+- [x] Conditionally render edit/delete buttons based on ownership and role
 
 ---
 
@@ -163,10 +163,10 @@ Before writing a single query, we must define how our data lives together.
 - [x] Build RootLayout with Navbar and Outlet
 - [x] Build ProtectedRoute and GuestRoute components
 - [x] Set up full React Router v7 route tree in App.tsx
-- [ ] Build Login and Register pages
-- [ ] Build Feed page with pagination
-- [ ] Build single Post page with threaded comments
-- [ ] Build Create and Edit post forms
+- [x] Build Login and Register pages
+- [x] Build Feed page with pagination
+- [x] Build single Post page with threaded comments
+- [x] Build Create and Edit post forms
 - [ ] Build Admin Dashboard
 - [ ] Apply Framer Motion transitions
 

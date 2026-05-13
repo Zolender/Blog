@@ -9,7 +9,7 @@ import GuestRoute from "./components/guestRout";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProtectedRoute from "./components/ProtectedRoute";
-import CreatePostPage from "./pages/createPostPage";
+import CreatePostPage from "./pages/CreatePostPage";
 import EditPostPage from "./pages/EditPostPage";
 import AdminPage from "./pages/AdminPage";
 import NotFoundPage from "./pages/NotFoundPage";
