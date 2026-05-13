@@ -25,6 +25,10 @@ const EditPostPage = () => {
                 //we need to check the ownership of the post, even tho mofication 
                 //would be rejected in the backend if the user isn't an admin or the post owner, 
                 //it would be a good thing to prevent the user from filling the form when we know it would be useless
+                if(user && user.id !== fetchedPost.author_id && user.role !== 'admin'){
+                    return navigate("/")
+                }
+                setPost(fetchedPost)
             }catch(err){
                 setError(err instanceof Error ? err.message : "Failed to load post")
             }finally{
