@@ -167,7 +167,7 @@ Before writing a single query, we must define how our data lives together.
 - [x] Build Feed page with pagination
 - [x] Build single Post page with threaded comments
 - [x] Build Create and Edit post forms
-- [ ] Build Admin Dashboard
+- [x] Build Admin Dashboard
 - [ ] Apply Framer Motion transitions
 
 ### Phase 6: Deployment
