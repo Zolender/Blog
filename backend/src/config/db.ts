@@ -14,5 +14,9 @@ pool.on("error", (err)=>{
     process.exit(-1)
 })
 
+//logs so we resolve the bug in deployment
+console.log("NODE_ENV:", process.env.NODE_ENV)
+console.log("SSL enabled:", process.env.NODE_ENV === "production")
+
 
 export default pool;
