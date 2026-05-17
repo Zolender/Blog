@@ -174,7 +174,7 @@ Before writing a single query, we must define how our data lives together.
 - [x] Migrate database to Supabase
 - [x] Update environment variables for production
 - [x] Deploy Backend to Render
-- [ ] Deploy Frontend to Vercel
+- [x] Deploy Frontend to Vercel
 
 ---
 
