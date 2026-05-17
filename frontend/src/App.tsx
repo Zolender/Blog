@@ -9,7 +9,7 @@ import GuestRoute from "./components/guestRout";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProtectedRoute from "./components/ProtectedRoute";
-import CreatePostPage from "./pages/CreatePostPage";
+import NewPostPage from "./pages/NewPostPage";
 import EditPostPage from "./pages/EditPostPage";
 import AdminPage from "./pages/AdminPage";
 import NotFoundPage from "./pages/NotFoundPage";
@@ -39,7 +39,7 @@ const App = () => {
                     <Route path="register" element={<GuestRoute><RegisterPage/></GuestRoute>} />
                 
                     {/* protected routes */}
-                    <Route path="posts/new" element={<ProtectedRoute><CreatePostPage/></ProtectedRoute>}/>
+                    <Route path="posts/new" element={<ProtectedRoute><NewPostPage/></ProtectedRoute>}/>
                     <Route path="posts/:id/edit" element={<ProtectedRoute><EditPostPage/></ProtectedRoute>}/>
 
                     {/* admin only */}

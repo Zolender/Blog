@@ -171,9 +171,9 @@ Before writing a single query, we must define how our data lives together.
 - [ ] Apply Framer Motion transitions
 
 ### Phase 6: Deployment
-- [ ] Migrate database to Supabase
-- [ ] Update environment variables for production
-- [ ] Deploy Backend to Render
+- [x] Migrate database to Supabase
+- [x] Update environment variables for production
+- [x] Deploy Backend to Render
 - [ ] Deploy Frontend to Vercel
 
 ---

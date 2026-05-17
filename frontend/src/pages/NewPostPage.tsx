@@ -4,7 +4,7 @@ import { postsApi } from "../api/posts";
 import PostForm from "../components/PostForm";
 
 
-const CreatePostPage = () => {
+const NewPostPage = () => {
     const navigate = useNavigate()
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -44,4 +44,4 @@ const CreatePostPage = () => {
     );
 }
  
-export default CreatePostPage;
+export default NewPostPage;
