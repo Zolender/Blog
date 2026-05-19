@@ -7,9 +7,9 @@ When in doubt about a color, font, spacing value, or component structure — che
 
 ## Brand
 
-**Name:** Z-Tales (displayed as "The Quiet Room" in Stitch references)
+**Name:** Z-Tales (displayed as "The Quiet Room")
 **Tagline:** *A sanctuary for the literate mind*
-**Tone:** Editorial, warm, reading-first. Think Medium meets Substack with a more personal feel.
+**Tone:** Editorial, warm, reading-first. Think Medium meets Substack with a more personal feel and you get an idea of how the app should look.
 
 ---
 

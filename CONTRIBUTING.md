@@ -45,17 +45,8 @@ Format: `type: short description`
 | `docs` | Documentation changes only |
 | `chore` | Config, dependencies, tooling |
 
-### Examples
 
-```
-feat: add PostCard component
-fix: correct like toggle on single post page
-style: apply Navbar design from design system
-docs: update DESIGN_SYSTEM with comment card spec
-chore: install Lora and Inter fonts
-```
 
----
 
 ## Local Setup
 
@@ -99,7 +90,7 @@ VITE_API_URL=
 
 ```bash
 npm run dev
-# Runs on http://localhost:5173
+# Runs on http://localhost:5173 mostly, but it really depends on whether you are running other softwares locally or not...
 ```
 
 Both processes must be running simultaneously. Use two terminals.
