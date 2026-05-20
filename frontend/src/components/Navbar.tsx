@@ -2,17 +2,19 @@ import { Link, useLocation, useNavigate } from "react-router";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { logout } from "../features/auth/authSlice";
 import { useState } from "react";
+import { Menu, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 
 
 const panelVariants = {
-    hidden: { x: '-100%'},
+    hidden: { x: '100%'},
     visible: {x: 0, transition:{
         type: "tween" as const,
         duration: 0.25,
     }},
     exit: {
-        x: '-100%',
+        x: '100%',
         transition: {
             type: 'tween' as const,
             duration: 0.2
@@ -55,9 +57,11 @@ const Navbar = () => {
                     <Link to="/" className="branc-name">Z-tales</Link>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <Link to="/" className={linkClass("/")}>Feed</Link>
                         {user && (
-                            <Link to="/posts/new" className={linkClass("/posts/new")}>Write</Link>
+                            <>
+                                <Link to="/" className={linkClass("/")}>Feed</Link>
+                                <Link to="/posts/new" className={linkClass("/posts/new")}>Write</Link>
+                            </>
                         )}
 
                         {user?.role === 'admin' && (
@@ -78,8 +82,41 @@ const Navbar = () => {
                             </>
                         )}
                     </div>
+
+                    <button className="md:hidden nav-link" onClick={()=> setMobileOpen(true) } aria-label="Open menu">
+                        <Menu size={22}/>
+                    </button>
                 </div>
             </nav>
+
+            <AnimatePresence>
+                {mobileOpen && (
+                    <>
+                        <motion.div key="overlay" 
+                            variants={overlayVariants}
+                            initial="hidden" animate="visible" exit="exit"
+                            className="fixed inset-0 z-50 bg-black/10"
+                            onClick={()=> setMobileOpen(false)}    
+                        />
+
+                        <motion.div
+                            key="panel"
+                            variants={panelVariants}
+                            initial="hidden" animate="visible" exit="exit"
+                            className="fixed top-20 right-10 z-50 h-fit w-4/6 maz-w-xs bg-white flex flex-col shadow-xl"
+                        >
+                            <div className="flex items-center justify-between px-6 py-5 border-b border-border">
+                                <div className="flex flex-col px-6 py-4 flex-1">
+                                    <Link to="/" onClick={()=> setMobileOpen(false)} className="nav-link py-3.5 border-b border-border">Feed</Link>
+                                    
+                                </div>
+                            </div>
+
+
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </>
     );
 }
