@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router";
 import { useAppDispatch, useAppSelector } from "../app/hooks";
 import { logout } from "../features/auth/authSlice";
+import { useState } from "react";
 
 
 
@@ -45,29 +46,35 @@ const Navbar = () => {
         navigate("/login")
     }
 
-    const isActive = (path: string) => location.pathname === path ? "border-b-2 border-accent text-accent" : "text-[#111111] hover: text-accent transition-colors duration-200"
+    const linkClass = (path: string) => location.pathname === path ? "nav-link-active" : "nav-link"
 
     return (
         <>
-            <nav className="bg-white border-b border-[#e5e5e5] h-16 sticky top-0 z-40">
-                <div className="flex items-center justify-between mx-auto h-full px-6 max-w-6xl">
-                    <Link to="/" className="font-serif text-2xl font-bold text-[#111111] trancking-tight">Z-Tales</Link>
-                    <div className="flex items-center gap-4">
+            <nav className="bg-white brorder-b border-border h-16 sticky top-0 z-40">
+                <div className="page-wrapper h-full flex items-center justify-between">
+                    <Link to="/" className="branc-name">Z-tales</Link>
+
+                    <div className="hidden md:flex items-center gap-8">
+                        <Link to="/" className={linkClass("/")}>Feed</Link>
+                        {user && (
+                            <Link to="/posts/new" className={linkClass("/posts/new")}>Write</Link>
+                        )}
+
+                        {user?.role === 'admin' && (
+                            <Link to="/admin">Admin</Link>
+                        )}
+                    </div>
+
+                    <div className="hidden md:flex items-center gap-5">
                         {user ? (
                             <>
-                                <span className="">
-                                    {user.username}
-                                </span>
-                                <Link to="/posts/new">Write</Link>
-                                {user.role === "admin" && (
-                                    <Link to="/admin">Admin</Link>
-                                )}
-                                <button onClick={handleLogout}>Logout</button>
+                                <span className="meta-text">{user.username}</span>
+                                <button onClick={handleLogout} className="nav-link">Logout</button>
                             </>
                         ): (
                             <>
-                                <Link to="/login">Login</Link>
-                                <Link to="/register">Register</Link>
+                                <Link to="/login" className="nav-link">Sign in</Link>
+                                <Link to="/register" className="btn-primary">Register</Link>
                             </>
                         )}
                     </div>

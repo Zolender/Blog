@@ -1,24 +1,248 @@
 @import 'tailwindcss';
 
+
 @theme {
-  --color-accent: #1A4D3E;
+  --color-accent:       #1A4D3E;
   --color-accent-hover: #163D31;
-  --color-surface: #F0EFED;
-  --color-border: #E5E5E5;
-  --color-muted: #888888;
-  --color-base: #FAFAFA;
+  --color-surface:      #F0EFED;
+  --color-border:       #E5E5E5;
+  --color-muted:        #888888;
+  --color-base:         #FAFAFA;
+  --color-primary:      #111111;
 
   --font-family-serif: 'Lora', Georgia, serif;
-  --font-family-sans: 'Inter', system-ui, sans-serif;
+  --font-family-sans:  'Inter', system-ui, sans-serif;
 }
+
 
 * {
   box-sizing: border-box;
 }
 
 body {
-  background-color: #FAFAFA;
-  color: #111111;
-  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--color-base);
+  color: var(--color-primary);
+  font-family: var(--font-family-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+
+@utility btn-primary {
+  background-color: var(--color-accent);
+  color: white;
+  font-family: var(--font-family-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.5rem 1.5rem;
+  transition: background-color 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--color-accent-hover);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@utility btn-ghost {
+  border: 1px solid var(--color-border);
+  color: var(--color-primary);
+  font-family: var(--font-family-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.5rem 1.5rem;
+  transition: background-color 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--color-surface);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@utility btn-danger {
+  color: #dc2626;
+  font-family: var(--font-family-sans);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #991b1b;
+  }
+}
+
+
+@utility input-field {
+  width: 100%;
+  background-color: white;
+  border: 1px solid var(--color-border);
+  padding: 0.5rem 1rem;
+  font-family: var(--font-family-sans);
+  font-size: 0.875rem;
+  color: var(--color-primary);
+  outline: none;
+  transition: border-color 0.2s;
+
+  &::placeholder {
+    color: var(--color-muted);
+  }
+
+  &:focus {
+    border-color: var(--color-accent);
+  }
+}
+
+@utility input-label {
+  display: block;
+  font-family: var(--font-family-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-primary);
+  margin-bottom: 0.25rem;
+}
+
+
+@utility heading-hero {
+  font-family: var(--font-family-serif);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-primary);
+}
+
+@utility heading-card {
+  font-family: var(--font-family-serif);
+  font-size: 1.2rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--color-primary);
+}
+
+@utility heading-section {
+  font-family: var(--font-family-serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+@utility body-text {
+  font-family: var(--font-family-serif);
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--color-primary);
+}
+
+@utility meta-text {
+  font-family: var(--font-family-sans);
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+@utility brand-name {
+  font-family: var(--font-family-serif);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: -0.01em;
+}
+
+
+@utility page-wrapper {
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+@utility reading-column {
+  max-width: 42rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+
+@utility card {
+  background-color: white;
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+}
+
+
+@utility badge {
+  display: inline-block;
+  border: 1px solid var(--color-border);
+  border-radius: 9999px;
+  padding: 0.125rem 0.75rem;
+  font-family: var(--font-family-sans);
+  font-size: 0.7rem;
+  color: var(--color-primary);
+}
+
+@utility badge-admin {
+  display: inline-block;
+  border: 1px solid var(--color-accent);
+  border-radius: 9999px;
+  padding: 0.125rem 0.75rem;
+  font-family: var(--font-family-sans);
+  font-size: 0.7rem;
+  color: var(--color-accent);
+}
+
+
+@utility pull-quote {
+  background-color: var(--color-accent);
+  padding: 2.5rem;
+  color: white;
+  font-family: var(--font-family-serif);
+  font-size: 1.25rem;
+  font-style: italic;
+  line-height: 1.7;
+}
+
+
+@utility skeleton {
+  background-color: var(--color-surface);
+  border-radius: 0.25rem;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* nav link configs and utils */
+@utility nav-link {
+  font-family: var(--font-family-sans);
+  font-size: 0.875rem;
+  color: var(--color-primary);
+  transition: color 0.2s;
+  padding-bottom: 0.125rem;
+
+  &:hover {
+    color: var(--color-accent);
+  }
+}
+
+@utility nav-link-active {
+  font-family: var(--font-family-sans);
+  font-size: 0.875rem;
+  color: var(--color-accent);
+  border-bottom: 2px solid var(--color-accent);
+  padding-bottom: 0.125rem;
 }
