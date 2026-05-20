@@ -58,7 +58,7 @@ const RegisterPage = () => {
                     <h1 className="brand-name mb-1">Z-tales</h1>
                     <p className="meta-text uppercase tracking-widest">A sanctuary for the literate mind</p>
                 </div>
-                <h2 className="font-serif text-2xl font-semibold text-primary mb-6">Create and account</h2>
+                <h2 className="font-serif text-2xl font-semibold text-primary mb-6 text-center">Create and account</h2>
 
                 {error && (
                     <div className="mb-5 pz-4 py-3 bg-red-50 border border-red-200 text-red-700 font-sans text-sm">{error}</div>
