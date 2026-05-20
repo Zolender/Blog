@@ -81,7 +81,7 @@ const LoginPage = () => {
                 </form>
 
 
-                <p className="mt-6 text-center font-sans text-sm text-muted">New to the archive? {" "} <Link to="/register" className="text-accent hover:underline font-medium">Register an account</L></p>
+                <p className="mt-6 text-center font-sans text-sm text-muted">New to the archive? {" "} <Link to="/register" className="text-accent hover:underline font-medium">Register an account</Link></p>
             </motion.div>
         </div>
     );
