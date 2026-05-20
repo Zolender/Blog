@@ -52,9 +52,9 @@ const Navbar = () => {
 
     return (
         <>
-            <nav className="bg-white brorder-b border-border h-16 sticky top-0 z-40">
+            <nav className="bg-white border-b border-border h-16 sticky top-0 z-40">
                 <div className="page-wrapper h-full flex items-center justify-between">
-                    <Link to="/" className="branc-name">Z-tales</Link>
+                    <Link to="/" className="brand-name">Z-tales</Link>
 
                     <div className="hidden md:flex items-center gap-8">
                         {user && (

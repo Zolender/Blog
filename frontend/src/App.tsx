@@ -30,19 +30,18 @@ const App = () => {
     return (
         <BrowserRouter>
             <Routes>
+            
+                <Route path="login" element={<GuestRoute><LoginPage/></GuestRoute>} />
+                <Route path="register" element={<GuestRoute><RegisterPage/></GuestRoute>} />
+                
                 <Route element={<RootLayout/>}>
-                    {/* public routes */}
                     <Route index element={<FeedPage/>}/>
                     <Route path="posts/:id" element={<PostPage/>} />
-                    {/* guest only pages, login and register */}
-                    <Route path="login" element={<GuestRoute><LoginPage/></GuestRoute>} />
-                    <Route path="register" element={<GuestRoute><RegisterPage/></GuestRoute>} />
-                
-                    {/* protected routes */}
+
+                    
                     <Route path="posts/new" element={<ProtectedRoute><NewPostPage/></ProtectedRoute>}/>
                     <Route path="posts/:id/edit" element={<ProtectedRoute><EditPostPage/></ProtectedRoute>}/>
 
-                    {/* admin only */}
                     <Route path="admin" element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
 
 
