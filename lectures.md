@@ -915,7 +915,7 @@ where anyone can read and test your API from the browser.
 ### When Swagger is worth adding
 
 - **Team environments** — the frontend reads the spec instead of asking the backend developer
-- **Public APIs** — if other developers consume your API, documentation is not optional
+- **Public APIs** — if other developers consume the API, documentation is not optional
 - **Large APIs** — 30+ endpoints across multiple resources
 - **Portfolio projects** — signals professional API development practice to employers
 
