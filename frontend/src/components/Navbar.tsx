@@ -108,7 +108,6 @@ const Navbar = () => {
                             <div className="flex items-center justify-between px-6 py-5 border-b border-border">
                                 <div className="flex flex-col px-6 py-4 flex-1">
                                     <Link to="/" onClick={()=> setMobileOpen(false)} className="nav-link py-3.5 border-b border-border">Feed</Link>
-                                    
                                 </div>
                             </div>
 

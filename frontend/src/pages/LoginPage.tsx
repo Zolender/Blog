@@ -3,7 +3,21 @@ import { useAppDispatch } from "../app/hooks";
 import React, { useState } from "react";
 import { authApi } from "../api/auth";
 import { setCredentials } from "../features/auth/authSlice";
+import {motion, AnimatePresence} from 'framer-motion'
 
+const pageVariants = {
+    hidden: {
+        opacity: 0,
+        y: 10
+    },
+    visible: {
+        opacity: 1, 
+        y: 0,
+        transition: {
+            duration: 0.3
+        }
+    }
+}
 
 const LoginPage = () => {
     const dispatch = useAppDispatch()
@@ -32,36 +46,43 @@ const LoginPage = () => {
 
 
     return (
-        <div className="max-w-md mx-auto mt-16">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Login</h1>
+        <div className="min-h-screen bg-surface flex items-center justify-center px-4">
 
-            {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-sm">{error}</div>
-            )}
-
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1">
-                    <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                        Email
-                    </label>
-                    <input type="email" id="email" required value={email} onChange={(e)=> setEmail(e.target.value)} className="border border-gray-300 rounded-sm placeholder-zinc-300 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <motion.div
+                variants={pageVariants}
+                initial="hidden"
+                animate="visible"
+                className="w-full max-w-md bg-white border border-border px-10 py-12"
+            >
+                <div className="text-center mb-8">
+                    <h1 className="brand-name mb-1">Z-tales</h1>
+                    <p className="meta-text uppercase tracking-widest">A sanctuary for the literate mind</p>
                 </div>
+                <h2 className="font-serif text-2xl font-semibold text-primary mb-6">Welcome</h2>
 
-                <div className="flex flex-col gap-1">
-                    <label htmlFor="password" className="text-sm font-medium text-gray-700">
-                        Password
-                    </label>
-                    <input type="password" id="password" required value={password} onChange={(e)=> setPassword(e.target.value)} className="border border-gray-300 rounded-sm placeholder-zinc-300 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
+                {error && (
+                    <div className="mb-5 pz-4 py-3 bg-red-50 border border-red-200 text-red-700 font-sans text-sm">{error}</div>
+                )}
 
-                <button type="submit" disabled={isLoading} className="bg-blue-600 text-white py-2 rounded-sm text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                    {isLoading? "Logging in..." : "Login"}
-                </button>
-            </form>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+                    <div>
+                        <label htmlFor="email" className="input-label">Email address</label>
+                        <input type="email" id="email" required placeholder="sth@exampme.com" value={email} onChange={(e)=> setEmail(e.target.value)} className="input-field" />
+                    </div>
 
-            <p className="mt-4 text-sm text-gray-500">
-                No account yet? {" "} <Link to="/register" className="text-blue-600 hover:underline">Login</Link>
-            </p>
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <label htmlFor="password" className="input-label mb-0!">Password</label>
+                        </div>
+                        <input type="password" id="password" required value={password} onChange={(e)=> setPassword(e.target.value)} placeholder="*********" className="input-field" />
+                    </div>
+
+                    <button className="btn-primary w-full mt-1" disabled={isLoading} type="submit">{isLoading ? "Siging in" : "Login"}</button>
+                </form>
+
+
+                <p className="mt-6 text-center font-sans text-sm text-muted">New to the archive? {" "} <Link to="/register" className="text-accent hover:underline font-medium">Register an account</L></p>
+            </motion.div>
         </div>
     );
 }
