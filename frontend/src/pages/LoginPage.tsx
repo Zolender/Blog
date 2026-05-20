@@ -42,7 +42,6 @@ const LoginPage = () => {
         animate="visible"
         className="w-full max-w-md bg-white border border-border px-6 sm:px-10 py-10 sm:py-12"
       >
-        {/* Header */}
         <div className="text-center mb-8">
           <Link to="/" className="brand-name inline-block mb-1">Z-Tales</Link>
           <p className="meta-text uppercase tracking-widest">
@@ -54,14 +53,12 @@ const LoginPage = () => {
           Welcome back
         </h2>
 
-        {/* Error */}
         {error && (
           <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 text-red-700 font-sans text-sm">
             {error}
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <FloatingInput
             id="email"
@@ -92,7 +89,6 @@ const LoginPage = () => {
           </button>
         </form>
 
-        {/* Footer */}
         <p className="mt-6 text-center font-sans text-sm text-muted">
           New to the archive?{' '}
           <Link to="/register" className="text-accent hover:underline font-medium">
