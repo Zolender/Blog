@@ -3,7 +3,7 @@ import { useAppDispatch } from "../app/hooks";
 import React, { useState } from "react";
 import { authApi } from "../api/auth";
 import { setCredentials } from "../features/auth/authSlice";
-import {motion, AnimatePresence} from 'framer-motion'
+import {motion} from 'framer-motion'
 
 const pageVariants = {
     hidden: {
@@ -58,7 +58,7 @@ const LoginPage = () => {
                     <h1 className="brand-name mb-1">Z-tales</h1>
                     <p className="meta-text uppercase tracking-widest">A sanctuary for the literate mind</p>
                 </div>
-                <h2 className="font-serif text-2xl font-semibold text-primary mb-6">Welcome</h2>
+                <h2 className="font-serif text-2xl font-semibold text-primary mb-6 text-center">Welcome Back!</h2>
 
                 {error && (
                     <div className="mb-5 pz-4 py-3 bg-red-50 border border-red-200 text-red-700 font-sans text-sm">{error}</div>
@@ -67,7 +67,7 @@ const LoginPage = () => {
                 <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                     <div>
                         <label htmlFor="email" className="input-label">Email address</label>
-                        <input type="email" id="email" required placeholder="sth@exampme.com" value={email} onChange={(e)=> setEmail(e.target.value)} className="input-field" />
+                        <input type="email" id="email" required placeholder="sth@example.com" value={email} onChange={(e)=> setEmail(e.target.value)} className="input-field" />
                     </div>
 
                     <div>
