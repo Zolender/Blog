@@ -168,13 +168,36 @@ Before writing a single query, we must define how our data lives together.
 - [x] Build single Post page with threaded comments
 - [x] Build Create and Edit post forms
 - [x] Build Admin Dashboard
-- [ ] Apply Framer Motion transitions
 
 ### Phase 6: Deployment
 - [x] Migrate database to Supabase
 - [x] Update environment variables for production
 - [x] Deploy Backend to Render
 - [x] Deploy Frontend to Vercel
+- [x] Fix IPv6 ENETUNREACH error (switched to Supabase connection pooler)
+- [x] Fix production API URL (removed /api prefix mismatch)
+- [x] Set up dev/main branch strategy
+
+### Phase 7: Design & UX Polish
+- [ ] Add Lora + Inter fonts via Google Fonts
+- [ ] Configure Tailwind with design system tokens (colors, fonts)
+- [ ] Apply design system to Navbar (desktop + mobile hamburger)
+- [ ] Apply design system to Footer
+- [ ] Build PostCard component with skeleton loader
+- [ ] Apply design system to Feed page (hero, grid, pagination)
+- [ ] Apply design system to Single Post page (reading layout, comments)
+- [ ] Apply design system to Create/Edit Post page
+- [ ] Apply design system to Login/Register pages
+- [ ] Apply design system to Admin page (sidebar, table)
+- [ ] Add empty states (Feed, Comments, Admin table)
+- [ ] Add error states with retry (Feed, Single Post)
+- [ ] Add skeleton loaders (Feed, Single Post)
+- [ ] Add 404 page
+- [ ] Add favicon
+- [ ] Add page titles and meta tags per page
+- [ ] Add Open Graph tags to Single Post page
+- [ ] Apply Framer Motion page transitions and micro-interactions
+- [ ] Mobile responsive pass — all pages tested at 375px, 768px, 1280px
 
 ---
 
@@ -213,8 +236,8 @@ and parses errors uniformly. Feature-specific modules call the client:
 
 ### Vite Proxy
 In development, all `/api/*` requests are proxied to `http://localhost:5000`.
-Components never hardcode a port or host. In production, the environment
-variable is swapped and no component code changes.
+In production, `VITE_API_URL` is set to the Render backend URL and the client
+uses that directly. No component code changes between environments.
 
 ### Folder Structure
 ```
@@ -222,7 +245,7 @@ frontend/
 ├── src/
 │   ├── api/            <- HTTP call modules
 │   ├── app/            <- Redux store and typed hooks
-│   ├── components/     <- Reusable UI (Navbar, ProtectedRoute, GuestRoute)
+│   ├── components/     <- Reusable UI (Navbar, PostCard, ProtectedRoute...)
 │   ├── features/       <- Redux slices (auth)
 │   ├── layouts/        <- RootLayout (Navbar + Outlet)
 │   ├── pages/          <- Page-level components
@@ -236,15 +259,20 @@ frontend/
 ## 7. UI Enhancements
 
 ### Icons (Lucide React)
-- Navbar (Home, Profile, Admin panel)
+- Navbar (Home, Profile, Admin panel, Menu/hamburger)
 - Buttons (Edit, Delete, Like, Reply)
-- Alerts and notifications
 - Empty states
+- Loading indicators
 
 ### UX Considerations
 - Show/hide actions based on role and ownership
 - Optimistic UI for likes (update count instantly, reconcile with server)
 - Thread replies visually indented under their parent comment
-- Skeleton loaders during data fetching
+- Skeleton loaders during data fetching (not spinners)
+- Empty states for zero-result screens
+- Error states with retry for failed fetches
 - Clear feedback for unauthorized actions
 - Framer Motion page transitions and micro-interactions
+- Mobile-first responsive layout at all breakpoints
+- Accessible markup — labels, aria attributes, keyboard navigation
+- Per-page document titles and Open Graph meta tags

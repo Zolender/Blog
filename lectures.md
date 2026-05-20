@@ -754,6 +754,179 @@ immediate feedback before they waste any time.
 
 ---
 
+## Phase 6 — Deployment
+
+### The DATABASE_URL pattern
+
+In production, database credentials are consolidated into a single connection string
+called `DATABASE_URL`. Every major hosting platform — Render, Railway, Heroku,
+Fly.io — expects this format:
+
+```
+postgresql://user:password@host:port/database
+```
+
+### Conditional SSL for database connections
+
+Local PostgreSQL does not use SSL. Managed cloud databases require it.
+The correct approach is to make SSL conditional on the environment:
+
+```typescript
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production'
+    ? { rejectUnauthorized: false }
+    : false
+})
+```
+
+Never put `?sslmode=require` in the connection string AND set `ssl` in the Pool
+config at the same time. Pick one. The Pool config option is the correct approach.
+
+### Supabase direct connection vs connection pooler
+
+Supabase provides two ways to connect:
+
+- **Direct connection** — `db.xxxx.supabase.co:5432`. Raw PostgreSQL. Resolves to
+  IPv6 on some regions, which causes `ENETUNREACH` on Render's free tier.
+
+- **Connection pooler** — `aws-0-region.pooler.supabase.com:6543`. Runs through
+  PgBouncer. Resolves to IPv4. This is the correct choice when deploying to Render.
+
+### Environment variables in production
+
+Never commit `.env` files. Set them in the hosting platform UI.
+A single extra space or wrong character causes a silent failure that looks like
+a connection error or missing configuration.
+
+### Why Render free tier services sleep
+
+Render spins down free services after 15 minutes of inactivity. The next request
+waits ~30 seconds for the service to wake. This is expected behavior, not a bug.
+Paid tiers stay always-on.
+
+### The pg pool is lazy
+
+The pool does not connect when the server starts. It waits for the first query.
+This means a server can start successfully with a completely wrong `DATABASE_URL`.
+Always test a real database route to confirm the connection is working.
+
+### Production API URL — the /api prefix trap
+
+The Vite proxy strips `/api` from requests in development before forwarding to the
+backend. The backend itself has no `/api` prefix on its routes. In production there
+is no Vite proxy. If `VITE_API_URL` is set to `https://backend.onrender.com/api`,
+every request will 404 because the backend routes are at `/posts` not `/api/posts`.
+
+The correct setup:
+- `VITE_API_URL=https://backend.onrender.com` (no /api suffix)
+- `BASE_URL = import.meta.env.VITE_API_URL || '/api'`
+
+In development: `BASE_URL` is `/api` — Vite proxy strips it and forwards correctly.
+In production: `BASE_URL` is the Render URL — requests go directly to the correct routes.
+
+---
+
+## Phase 7 — Design & UX
+
+### Mobile-first CSS
+
+Writing styles mobile-first means the base CSS (no prefix) targets small screens.
+Larger screens are handled with `md:` and `lg:` overrides. This produces leaner CSS
+and forces you to think about what is truly essential before adding complexity.
+
+```tsx
+// Mobile: full width. Tablet: 2 cols. Desktop: 3 cols.
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+```
+
+Writing desktop-first and trying to shrink down with `max-md:` overrides is
+technically possible but produces harder-to-maintain CSS and commonly breaks
+in unexpected ways on real devices.
+
+### Skeleton screens vs spinners
+
+A spinner communicates "something is loading" but gives no sense of what is coming
+or how much space it will occupy. When content arrives, the layout jumps. This is
+called layout shift and it feels broken.
+
+A skeleton screen mirrors the shape of the real content. The layout is stable before
+data arrives. When data loads, content simply replaces the placeholder — no jump.
+Tailwind's `animate-pulse` on `bg-surface` shapes is all that is needed.
+
+### Why every state must be designed
+
+Every data-fetching component has four possible states: loading, empty, error,
+success. Leaving any of them undesigned means a user will eventually see a blank
+screen or a broken layout. Empty states also have a UX purpose — they guide the
+user toward an action (write a post, add a comment) instead of leaving them confused.
+
+### Accessibility is not optional
+
+Accessibility is commonly treated as a finishing touch. It is not. It affects:
+- Screen reader users who navigate by heading structure and aria labels
+- Keyboard-only users who need proper focus management
+- Users with low vision who depend on sufficient color contrast
+- Search engines, which read your markup the same way screen readers do
+
+The baseline rules are not complicated: label your inputs, alt your images,
+aria-label your icon buttons, and do not remove focus outlines.
+
+### Document titles per page
+
+Setting a unique `<title>` per page serves two purposes. First, users with multiple
+tabs can identify your page by its tab title. Second, search engines use the title
+as the primary signal for what the page is about. A page where every route shows
+"Z-Tales" in the tab is both confusing and bad for SEO.
+
+### Open Graph tags
+
+When a link to a Z-Tales post is shared on Twitter, WhatsApp, or Slack, the platform
+fetches the page and looks for Open Graph meta tags to build the preview card. Without
+them, the preview is blank or generic. With them, it shows the post title, a description,
+and the banner image. This is the difference between a link that gets clicked and one
+that gets ignored.
+
+```html
+<meta property="og:title" content="The Art of Stillness — Z-Tales" />
+<meta property="og:description" content="First 160 characters of the post..." />
+<meta property="og:image" content="https://..." />
+```
+
+### The 404 page as a brand moment
+
+A 404 page is visited more than most developers expect — mistyped URLs, deleted posts,
+shared links that have gone stale. A blank screen or a raw browser error is a dead end.
+A branded 404 page with a link back to the feed keeps the user inside the app and
+reinforces the platform's voice. The copy matters — "This page does not exist" is fine,
+but "The tale you were looking for has either moved or was never written" is on-brand.
+
+---
+
+## Swagger / OpenAPI — What it is and when to use it
+
+### What Swagger is
+
+Swagger (now officially called OpenAPI) is a standard for documenting REST APIs.
+You describe your API in a specification — every route, request body shape, response
+shape, and auth requirement — and tooling turns that into an interactive UI at `/api-docs`
+where anyone can read and test your API from the browser.
+
+### When Swagger is worth adding
+
+- **Team environments** — the frontend reads the spec instead of asking the backend developer
+- **Public APIs** — if other developers consume your API, documentation is not optional
+- **Large APIs** — 30+ endpoints across multiple resources
+- **Portfolio projects** — signals professional API development practice to employers
+
+### Why we did not add it during development
+
+You were building both sides simultaneously and were the only consumer of your own API.
+Swagger adds setup overhead that only pays off when someone else needs to read your API.
+The right time to add it is after the API surface is stable — which it now is.
+
+---
+
 ## Challenges Faced
 
 ### The server would not start
@@ -778,12 +951,31 @@ any application code runs.
 
 `localhost` on Windows can resolve to a Unix socket (peer authentication) rather than
 TCP. Using `127.0.0.1` forces TCP and consistent password authentication behavior.
-The `--env-file` fix made this moot since the variables were not being loaded at all.
 
 ### Vite proxy not forwarding requests
 
 The target URL was written as `http://localhost/5000` — a slash before the port
 instead of a colon. Vite proxied to the wrong address silently. Every API call
 returned a proxy error. The fix was a single character: `http://localhost:5000`.
-Lesson: always check the exact format of URLs. A typo here produces no compile
-error and no obvious warning — just broken network requests.
+
+### `fetchUsers` never called in AdminPage
+
+Inside the `useEffect`, `fetchUsers` was defined as an async function but called
+inside itself — making it recursive — instead of being called after the function
+closed. The `finally` block never ran so `isLoading` stayed `true` forever.
+The fix was calling `fetchUsers()` after the function definition, inside the
+`useEffect` callback but outside the function body.
+
+### `ENETUNREACH` IPv6 error on Render connecting to Supabase
+
+Render's free tier does not support outbound IPv6 connections. Supabase's direct
+database host resolves to IPv6 in some regions. The fix was switching to Supabase's
+connection pooler (`aws-0-region.pooler.supabase.com:6543`) which resolves to IPv4.
+
+### Production API 404 on every request
+
+`VITE_API_URL` was set to `https://z-tales.onrender.com` but `client.ts` was building
+the URL as `${VITE_API_URL}/api/posts`. The backend has no `/api` prefix on its routes.
+The fix was removing `/api` from the `VITE_API_URL` value and making `client.ts` use
+`VITE_API_URL` directly as the base, falling back to `/api` only in development where
+the Vite proxy handles the stripping.
