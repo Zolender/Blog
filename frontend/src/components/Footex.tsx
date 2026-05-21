@@ -16,7 +16,7 @@ const Footer = () => {
             <div className="page-wrapper py-10 flex flex-col sm:flex-row items-center justify-between gap-6">
                 <div className="flex-col items-center sm:items-start gap-1">
                     <Link to="/" className="brand-name text-lg">Z-tales</Link>
-                    <p className="meta-text uppercase tracking-widest" style={{fontSize: "0.65rem"}}>A sanctuary for the literate mind</p>
+                    <p className="meta-text uppercase tracking-widest fine-text" >A sanctuary for the literate mind</p>
                 </div>
 
                 <div className="flex items-center gap-6">
@@ -24,7 +24,7 @@ const Footer = () => {
                         <Link key={link.label} to={link.to} className="font-sans text-xs text-muted hover:text-accent transition-colors duration-200">{link.label}</Link>
                     ))}
                 </div>
-                <p className="meta-text" style={{fontSize: "0.65rem"}}>
+                <p className="meta-text fine-text">
                     &copy; {new Date().getFullYear()} Z-tales. All rights reserved.
                 </p>
             </div>

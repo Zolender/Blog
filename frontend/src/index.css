@@ -320,3 +320,7 @@ body {
   text-align: center;
   padding-block: 6rem;
 }
+
+@utility fine-text {
+  font-size: 0.65rem;
+}
