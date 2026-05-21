@@ -9,6 +9,10 @@
   --color-muted:        #888888;
   --color-base:         #FAFAFA;
   --color-primary:      #111111;
+  --color-danger:       #dc2626;
+  --color-danger-hover: #991b1b;
+  --color-danger-bg:    #fef2f2;
+  --color-danger-border:#fecaca;
 
   --font-family-serif: 'Lora', Georgia, serif;
   --font-family-sans:  'Inter', system-ui, sans-serif;
@@ -38,6 +42,8 @@ body {
   padding: 0.5rem 1.5rem;
   transition: background-color 0.2s;
   cursor: pointer;
+  display: inline-block;
+  text-align: center;
 
   &:hover {
     background-color: var(--color-accent-hover);
@@ -58,26 +64,28 @@ body {
   padding: 0.5rem 1.5rem;
   transition: background-color 0.2s;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
 
   &:hover {
     background-color: var(--color-surface);
   }
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
   }
 }
 
 @utility btn-danger {
-  color: #dc2626;
+  color: var(--color-danger);
   font-family: var(--font-family-sans);
   font-size: 0.875rem;
   cursor: pointer;
   transition: color 0.2s;
 
   &:hover {
-    color: #991b1b;
+    color: var(--color-danger-hover);
   }
 }
 
@@ -109,6 +117,16 @@ body {
   font-weight: 500;
   color: var(--color-primary);
   margin-bottom: 0.25rem;
+}
+
+
+@utility error-banner {
+  background-color: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-danger);
+  font-family: var(--font-family-sans);
+  font-size: 0.875rem;
+  padding: 0.75rem 1rem;
 }
 
 
@@ -183,6 +201,36 @@ body {
 }
 
 
+@utility avatar {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background-color: var(--color-accent);
+}
+
+@utility avatar-md {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background-color: var(--color-accent);
+}
+
+@utility avatar-initial {
+  color: white;
+  font-family: var(--font-family-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+
 @utility badge {
   display: inline-block;
   border: 1px solid var(--color-border);
@@ -207,11 +255,27 @@ body {
 @utility pull-quote {
   background-color: var(--color-accent);
   padding: 2.5rem;
-  color: white;
+}
+
+@utility pull-quote-text {
   font-family: var(--font-family-serif);
   font-size: 1.25rem;
   font-style: italic;
   line-height: 1.7;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@utility pull-quote-attr {
+  font-family: var(--font-family-sans);
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 1rem;
+}
+
+
+@utility divider {
+  border: none;
+  border-top: 1px solid var(--color-border);
 }
 
 
@@ -222,11 +286,11 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
+  0%, 100% { opacity: 1;   }
   50%       { opacity: 0.4; }
 }
 
-/* nav link configs and utils */
+
 @utility nav-link {
   font-family: var(--font-family-sans);
   font-size: 0.875rem;
@@ -245,4 +309,14 @@ body {
   color: var(--color-accent);
   border-bottom: 2px solid var(--color-accent);
   padding-bottom: 0.125rem;
+}
+
+
+@utility state-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding-block: 6rem;
 }

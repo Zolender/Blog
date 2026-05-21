@@ -5,6 +5,9 @@ interface Props{
     post: Post
 }
 const PostCard = ({post}: Props) => {
+
+    const colors = ["b-teal-600"]
+
     return (
         <Link to={`/posts/${post.id}`} className="block border border-gray-200 rounded-lg p-5 hover:border-gray-400 transition-colors bg-white">
             {/* in case the post has a banner image then we render it first */}
