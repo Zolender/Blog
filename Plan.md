@@ -179,24 +179,22 @@ Before writing a single query, we must define how our data lives together.
 - [x] Set up dev/main branch strategy
 
 ### Phase 7: Design & UX Polish
-- [ ] Add Lora + Inter fonts via Google Fonts
-- [ ] Configure Tailwind with design system tokens (colors, fonts)
-- [ ] Apply design system to Navbar (desktop + mobile hamburger)
-- [ ] Apply design system to Footer
-- [ ] Build PostCard component with skeleton loader
-- [ ] Apply design system to Feed page (hero, grid, pagination)
+- [x] Add Lora + Inter fonts via Google Fonts
+- [x] Configure design system tokens in `index.css` (`@theme`, `@utility`)
+- [x] Apply design system to Navbar — desktop + mobile floating panel
+- [x] Apply design system to Footer
+- [x] Build `FloatingInput` component (animated label)
+- [x] Build `PostCard` with skeleton, avatar, read time, engagement row
+- [x] Build `SkeletonCard` and `PullQuote` as standalone components
+- [x] Extract shared helpers into `src/utils/formatting.ts`
+- [x] Merge Login and Register into single `AuthPage` with tab toggle
+- [x] Apply design system to Feed page — hero, pull quote, grid, pagination
 - [ ] Apply design system to Single Post page (reading layout, comments)
 - [ ] Apply design system to Create/Edit Post page
-- [ ] Apply design system to Login/Register pages
-- [ ] Apply design system to Admin page (sidebar, table)
-- [ ] Add empty states (Feed, Comments, Admin table)
-- [ ] Add error states with retry (Feed, Single Post)
-- [ ] Add skeleton loaders (Feed, Single Post)
-- [ ] Add 404 page
-- [ ] Add favicon
-- [ ] Add page titles and meta tags per page
+- [ ] Apply design system to Admin page
+- [ ] Build 404 page
+- [ ] Add page titles per route (`document.title`)
 - [ ] Add Open Graph tags to Single Post page
-- [ ] Apply Framer Motion page transitions and micro-interactions
 - [ ] Mobile responsive pass — all pages tested at 375px, 768px, 1280px
 
 ---
@@ -243,15 +241,16 @@ uses that directly. No component code changes between environments.
 ```
 frontend/
 ├── src/
-│   ├── api/            <- HTTP call modules
-│   ├── app/            <- Redux store and typed hooks
-│   ├── components/     <- Reusable UI (Navbar, PostCard, ProtectedRoute...)
-│   ├── features/       <- Redux slices (auth)
-│   ├── layouts/        <- RootLayout (Navbar + Outlet)
-│   ├── pages/          <- Page-level components
-│   ├── types/          <- Shared TypeScript interfaces
-│   ├── App.tsx         <- Router definition
-│   └── main.tsx        <- Entry point, Redux Provider
+│   ├── api/            ← HTTP call modules
+│   ├── app/            ← Redux store and typed hooks
+│   ├── components/     ← Reusable UI (Navbar, PostCard, SkeletonCard...)
+│   ├── features/       ← Redux slices (auth)
+│   ├── layouts/        ← RootLayout (Navbar + Outlet + Footer)
+│   ├── pages/          ← Page-level components
+│   ├── types/          ← Shared TypeScript interfaces
+│   ├── utils/          ← Shared helpers (formatting, avatar colors)
+│   ├── App.tsx         ← Router definition
+│   └── main.tsx        ← Entry point, Redux Provider
 ```
 
 ---
@@ -259,20 +258,18 @@ frontend/
 ## 7. UI Enhancements
 
 ### Icons (Lucide React)
-- Navbar (Home, Profile, Admin panel, Menu/hamburger)
-- Buttons (Edit, Delete, Like, Reply)
-- Empty states
-- Loading indicators
+- Navbar (Menu, X, Rss, PenLine, Shield, LogIn, LogOut, UserPlus)
+- Post page (Heart, MessageCircle, Edit2, Trash2)
+- Feed page (RefreshCcw)
+- Write page (Image, ArrowLeft, X)
 
 ### UX Considerations
 - Show/hide actions based on role and ownership
 - Optimistic UI for likes (update count instantly, reconcile with server)
-- Thread replies visually indented under their parent comment
+- Thread replies visually indented under their parent comment with left border
 - Skeleton loaders during data fetching (not spinners)
 - Empty states for zero-result screens
 - Error states with retry for failed fetches
-- Clear feedback for unauthorized actions
+- Inline confirmation for destructive actions (no browser `confirm()` or `alert()`)
 - Framer Motion page transitions and micro-interactions
-- Mobile-first responsive layout at all breakpoints
-- Accessible markup — labels, aria attributes, keyboard navigation
-- Per-page document titles and Open Graph meta tags
+- Mobile-first responsive

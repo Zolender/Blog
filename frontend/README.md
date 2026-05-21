@@ -1,73 +1,57 @@
-# React + TypeScript + Vite
+# Z-Tales — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The React frontend for Z-Tales. Built with Vite, TypeScript, Tailwind CSS v4, Redux Toolkit, and Framer Motion.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Stack
 
-## React Compiler
+- **React 19** + TypeScript
+- **React Router v7** — client-side routing
+- **Redux Toolkit** — global auth state
+- **Tailwind CSS v4** — utility-first styling with custom design system tokens
+- **Framer Motion** — page transitions and micro-interactions
+- **Lucide React** — icons
+- **Vite** — dev server and build tool
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+```bash
+npm install
+npm run dev
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Requires the backend to be running at `localhost:5000`.
+The Vite proxy forwards all `/api/*` requests automatically in development.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Design System
+
+Colors, fonts, spacing, and component patterns all live in two places:
+
+- `src/index.css` — Tailwind v4 `@theme` tokens and `@utility` class definitions
+- `DESIGN_SYSTEM.md` (root) — full documentation of every visual decision
+
+Do not hardcode colors or font values in components. Use the utilities.
+
+---
+
+## Key Directories
+
+```
+src/
+├── api/          # HTTP calls — auth.ts, posts.ts, admin.ts
+├── app/          # Redux store, typed hooks
+├── components/   # Reusable UI — Navbar, PostCard, FloatingInput...
+├── features/     # Redux slices — authSlice
+├── layouts/      # RootLayout (Navbar + Outlet + Footer)
+├── pages/        # Page components — FeedPage, PostPage, AuthPage...
+├── types/        # Shared TypeScript interfaces
+├── utils/        # formatting.ts — getAvatarColor, getReadTime, formatDate
+├── App.tsx       # Route tree
+└── main.tsx      # Entry point, Redux Provider
 ```
