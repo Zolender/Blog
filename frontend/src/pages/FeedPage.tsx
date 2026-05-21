@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { PaginationMeta, Post } from "../types";
 import { postsApi } from "../api/posts";
 import { Link } from "react-router";
-import PostCard from "../components/postCard";
+import PostCard from "../components/PostCard";
 import SkeletonCard from "../components/SkeletonCard";
 import { RefreshCcw } from "lucide-react";
 import { motion } from "framer-motion";

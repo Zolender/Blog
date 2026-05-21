@@ -48,7 +48,7 @@ const FloatingInput = ({
           absolute left-4 font-sans pointer-events-none
           transition-all duration-200
           ${lifted
-            ? 'top-1.5 text-[0.65rem] text-accent'
+            ? 'top-1.5 fine-text text-accent'
             : 'top-1/2 -translate-y-1/2 text-sm text-muted'
           }
         `}
