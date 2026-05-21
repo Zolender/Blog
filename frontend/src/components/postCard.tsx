@@ -1,33 +1,92 @@
 import { Link } from "react-router";
 import type { Post } from "../types";
+import { motion } from "framer-motion";
+import { Heart, MessageCircle } from "lucide-react";
 
 interface Props{
     post: Post
 }
+
+const avatarColors = [
+    'bg-teal-700', 'bg-violet-600', 'bg-amber-600',
+    'bg-rose-600', 'bg-sky-600', 'bg-emerald-700'
+]
+
+const getAvatarColor = (name: string)=>{
+    let hash = 0
+    for(let i = 0; i< name.length; i++) hash += name.charCodeAt(i)
+    return avatarColors[hash % avatarColors.length]
+}
+
+const getReadTime = (content: string)=> {
+    const words = content.trim().split(/\s+/).length
+    return `${Math.max(1, Math.round(words/200))} min read`
+}
+
+const formatDate = (dateString: string)=>{
+    return new Date(dateString).toLocaleDateString("en-US", {
+        month: 'short', day: "numeric", year: "numeric"
+    })
+}
+
 const PostCard = ({post}: Props) => {
 
-    const colors = ["b-teal-600"]
+    const initial = post.author_username.charAt(0).toUpperCase()
+    const avatarColor = getAvatarColor(post.author_username)
 
     return (
-        <Link to={`/posts/${post.id}`} className="block border border-gray-200 rounded-lg p-5 hover:border-gray-400 transition-colors bg-white">
-            {/* in case the post has a banner image then we render it first */}
-            {post.banner_image && (
-                <img src={post.banner_image} alt={post.title} className="w-full h-48 object-cover rounded-sm mb-4" />
-            )}
-            {/* now the normal content of the post but to keep things uniform, we would slice the string for the content so that some don't take much more space than others */}
-            <p className="text-sm text-gray-500 mb-3 line-clamp-2">
-                {post.content.slice(0,150)}{post.content.length>150 ? "..." : ""}
-            </p>
-            {/* a bit more information about the posts  */}
-            <div className="flex items-center justify-between text-xs text-gray-400">
-                <span>by {post.author_username}</span>
-                <div className="flex items-center gap-3">
-                    <span>{Number(post.like_count)} likes</span>
-                    <span>{Number(post.comment_count)} comments</span>
-                    <span>{new Date(post.created_at).toLocaleDateString()}</span>
+        <motion.div
+            whileHover={{y: -2}}
+            transition={{duration: 0.2}}
+        >
+            <Link to={`/posts/${post.id}`} className="card block">
+                {/* in case the post has a banner image then we render it first */}
+                {post.banner_image ? (
+                    <img src={post.banner_image} alt={post.title} className="w-full h-48 object-cover" />
+                ): (
+                    <div className="w-full h-48 bg-surface flex items-center justify-center">
+                        <span className="font-serif text-5xl font-bold text-border select-none">
+                            {post.title.charAt(0).toUpperCase()}
+                        </span>
+                    </div>
+                )}
+
+                <div className="p-5 flex flex-col gap-3">
+                    <p className="meta-text uppercase tracking-wide">
+                        {getReadTime(post.content)}
+                        <span className="mx-2">.</span>
+                        {formatDate(post.created_at)}
+                    </p>
+
+                    <h2 className="heading-card line-clamp-2">{post.title}</h2>
+
+                    <p className="font-sans text-sm text-muted line-clamp-2 leading-relaxed">
+                        {post.content.slice(0,140)}
+                        {post.content.length> 140? "...": ""}
+                    </p>
+
+                    <div className="flex items-center justify-between mt-1 pt-3 border-t border-border">
+                        <div className="flex items-center gap-2">
+                            <div className={`avatar ${avatarColor}`}>
+                                <span className="avatar-initial">{initial}</span>
+                            </div>
+
+                            <p className="font-sans text-xs font-medium text-primary">{post.author_username}</p>
+                        </div>
+
+                        <div className="flex items-center gap-3 meta-text">
+                            <span className="flex items-center gap-1">
+                                <Heart size={12}/> {Number(post.like_count)}
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <MessageCircle size={12}/>{Number(post.comment_count)}
+                            </span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </Link>
+            </Link>
+        </motion.div>
+        
     );
 }
  
