@@ -3,6 +3,29 @@ import type { PaginationMeta, Post } from "../types";
 import { postsApi } from "../api/posts";
 import { Link } from "react-router";
 import PostCard from "../components/postCard";
+import SkeletonCard from "../components/SkeletonCard";
+
+
+const pageVariants = {
+    hidden: {opacity: 0, y: 10},
+    visible: {opacity: 1, y: 0, transtion: {duration: 0.3}}
+}
+
+const avatarColors = [
+    'bg-teal-700', 'bg-violet-600', 'bg-amber-600',
+    'bg-rose-600', 'bg-sky-600', 'bg-emerald-700'
+]
+
+const getAvatarColor = (name: string) => {
+  let hash = 0
+  for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i)
+  return avatarColors[hash % avatarColors.length]
+}
+
+const formatDate = (dateString: string) =>
+  new Date(dateString).toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+  })
 
 
 const FeedPage = () => {
@@ -41,8 +64,10 @@ const FeedPage = () => {
 
     if(isLoading){
         return (
-            <div className="flex justify-center py-20">
-                <p className="text-gray-400 text-sm">Loading posts...</p>
+            <div className="page-wrapper py-12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {Array.from({length: 6}).map((_,i)=> <SkeletonCard key={i}/>)}
+                </div>
             </div>
         )
     }
