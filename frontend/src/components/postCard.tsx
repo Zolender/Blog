@@ -2,32 +2,13 @@ import { Link } from "react-router";
 import type { Post } from "../types";
 import { motion } from "framer-motion";
 import { Heart, MessageCircle } from "lucide-react";
+import { formatDate, getAvatarColor, getReadTime } from "../utils/formatting";
 
 interface Props{
     post: Post
 }
 
-const avatarColors = [
-    'bg-teal-700', 'bg-violet-600', 'bg-amber-600',
-    'bg-rose-600', 'bg-sky-600', 'bg-emerald-700'
-]
 
-const getAvatarColor = (name: string)=>{
-    let hash = 0
-    for(let i = 0; i< name.length; i++) hash += name.charCodeAt(i)
-    return avatarColors[hash % avatarColors.length]
-}
-
-const getReadTime = (content: string)=> {
-    const words = content.trim().split(/\s+/).length
-    return `${Math.max(1, Math.round(words/200))} min read`
-}
-
-const formatDate = (dateString: string)=>{
-    return new Date(dateString).toLocaleDateString("en-US", {
-        month: 'short', day: "numeric", year: "numeric"
-    })
-}
 
 const PostCard = ({post}: Props) => {
 
