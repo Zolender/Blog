@@ -6,13 +6,12 @@ import RootLayout from "./layouts/RootLayout";
 import FeedPage from "./pages/FeedPage";
 import PostPage from "./pages/PostPage";
 import GuestRoute from "./components/guestRout";
-import LoginPage from "./pages/LoginPage";
-import RegisterPage from "./pages/RegisterPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NewPostPage from "./pages/NewPostPage";
 import EditPostPage from "./pages/EditPostPage";
 import AdminPage from "./pages/AdminPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import AuthPage from "./pages/AuthPage";
 
 
 const App = () => {
@@ -31,8 +30,8 @@ const App = () => {
         <BrowserRouter>
             <Routes>
             
-                <Route path="login" element={<GuestRoute><LoginPage/></GuestRoute>} />
-                <Route path="register" element={<GuestRoute><RegisterPage/></GuestRoute>} />
+                <Route path="login" element={<GuestRoute><AuthPage/></GuestRoute>} />
+                <Route path="register" element={<GuestRoute><AuthPage/></GuestRoute>} />
                 
                 <Route element={<RootLayout/>}>
                     <Route index element={<FeedPage/>}/>
