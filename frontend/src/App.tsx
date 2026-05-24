@@ -12,6 +12,7 @@ import EditPostPage from "./pages/EditPostPage";
 import AdminPage from "./pages/AdminPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import AuthPage from "./pages/AuthPage";
+import WriterLayout from "./layouts/WriterLayout";
 
 
 const App = () => {
@@ -23,7 +24,9 @@ const App = () => {
 
     if(isLoading){
         return (
-            <div className="text-gray-500">Loading...</div>
+            <div className="state-container">
+                <p className="meta-text">Loading...</p>
+            </div>
         )
     }
     return (
@@ -33,16 +36,16 @@ const App = () => {
                 <Route path="login" element={<GuestRoute><AuthPage/></GuestRoute>} />
                 <Route path="register" element={<GuestRoute><AuthPage/></GuestRoute>} />
                 
+                <Route element={<WriterLayout/>}>
+                    <Route path="posts/new" element={<ProtectedRoute><NewPostPage/></ProtectedRoute>}/>
+                    <Route path="posts/:id/edit" element={<ProtectedRoute><EditPostPage/></ProtectedRoute>}/>
+                </Route> 
+
                 <Route element={<RootLayout/>}>
                     <Route index element={<FeedPage/>}/>
                     <Route path="posts/:id" element={<PostPage/>} />
-
-                    
-                    <Route path="posts/new" element={<ProtectedRoute><NewPostPage/></ProtectedRoute>}/>
-                    <Route path="posts/:id/edit" element={<ProtectedRoute><EditPostPage/></ProtectedRoute>}/>
-
+                   
                     <Route path="admin" element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
-
 
                     <Route path="*" element={<NotFoundPage/>} />
                 </Route>
