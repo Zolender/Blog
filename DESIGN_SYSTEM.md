@@ -48,7 +48,7 @@ When in doubt about a color, font, spacing value, or component structure — che
 }
 ```
 
-> ⚠️ This project uses **Tailwind CSS v4**. There is no `tailwind.config.ts`.
+>  This project uses **Tailwind CSS v4**. There is no `tailwind.config.ts`.
 > All tokens live in `@theme {}` inside `frontend/src/index.css`.
 > All reusable class patterns live in `@utility {}` blocks in the same file.
 > Never use inline `style={{}}` for values that belong to the design system.
