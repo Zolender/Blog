@@ -1,4 +1,4 @@
-import { ArrowLeft, Bold, Code, Edit2, Eye, Heading2, Image, Italic, List, Minus, Quote } from "lucide-react"
+import { ArrowLeft, Bold, Code, Code2, Edit2, Eye, Heading2, Image, Italic, Link, List, Minus, Quote, StrikethroughIcon } from "lucide-react"
 import { useCallback, useRef, useState, type SubmitEvent } from "react"
 import { useNavigate } from "react-router"
 import ReactMarkdown from "react-markdown"
@@ -71,6 +71,9 @@ const PostForm = ({initialValues, onSubmit, submitLabel, isLoading, error}: Post
         {icon: <Quote size={14}/>, label: "Blockquote", action: ()=> injectLinePrefix("> ")},
         {icon: <List size={14}/>, label: "List Item", action: ()=> injectLinePrefix("- ")},
         {icon: <Minus size={14}/>, label: "Divider", action: ()=> injectWrap("\n\n---\n\n", "", "")},
+        {icon: <StrikethroughIcon size={14}/>, label: "StrikeThrough", action: ()=> injectWrap("~~", "~~", "strikethrough text")},
+        {icon: <Code2 size={14}/>, label: "Code Block", action: ()=> injectWrap("\n```\n", "\n```\n", "code here")},
+        {icon: <Link size={14}/>, label: "Link", action: ()=> injectWrap("[", "](url)", "link text")}
     ]
     
     return (
