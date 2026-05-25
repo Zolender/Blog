@@ -4,12 +4,21 @@ import { useEffect, useState } from "react";
 import type { Post, Comment } from "../types";
 import { postsApi } from "../api/posts";
 import CommentItem from "../components/CommentItem";
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from "remark-gfm";
+import { useToast } from "../components/Toast";
+import ConfirmModal from "../components/ConfirmModal";
+import { motion } from "framer-motion";
+import { formatDate, getAvatarColor, getReadTime } from "../utils/formatting";
+import { div } from "framer-motion/client";
+import { Edit2, Heart, MessageCircle, Trash2 } from "lucide-react";
 
 
 const PostPage = () => {
     const { id } = useParams()
     const navigate = useNavigate()
     const {user} = useAppSelector((state)=> state.auth)
+    const {showToast} = useToast()
 
     const [post, setPost] = useState<Post | null >(null)
     const [comments, setComments] = useState<Comment[]>([])
@@ -27,6 +36,9 @@ const PostPage = () => {
     const [replyingTo, setReplyingTo] = useState<number | null>(null)
     const [replyContent, setReplyContent] = useState("")
     const [replyLoading, setReplyLoading] = useState(false)
+
+    const [deletePostOpen, setDeletePostOpen] = useState(false)
+
 
     useEffect(()=>{
         const fetchPost = async () => {
@@ -46,6 +58,14 @@ const PostPage = () => {
         }
         fetchPost()
     },[id])
+
+    //the docs title
+    useEffect(()=>{
+        if(post)document.title = `${post.title}- Z-Tales`
+        return ()=> {
+            document.title = "Z-Tales"
+        }
+    }, [post])
 
 
     //whenever a post is liked,...
@@ -71,12 +91,12 @@ const PostPage = () => {
 
     //whenever an admin or the author deletes a posts
     const handleDeletePost = async() =>{
-        if(!confirm("Are you sure you want to delete this post?"))return
         try{
             await postsApi.delete(Number(id))
+            showToast("Post deleted successfully")
             navigate("/")
         }catch(err){
-            alert(err instanceof Error ? err.message: "Failed to delete post")
+            showToast(err instanceof Error ? err.message: "Failed to delete post")
         }
     }
 
@@ -113,7 +133,7 @@ const PostPage = () => {
             setReplyContent("")
             setReplyingTo(null)
         }catch(err){
-            alert(err instanceof Error? err.message: "Failed to add reply")
+            showToast(err instanceof Error? err.message: "Failed to add reply")
         }finally{
             setReplyLoading(false)
         }
@@ -122,13 +142,12 @@ const PostPage = () => {
 
     //deleting a comment, would need an handler as well
     const handleDeleteComment = async (commentId: number)=>{
-        if(!confirm("Delet this comment?"))return
         try{
             await postsApi.deleteComment(Number(id), commentId)
             //we would remove it from the local state without refetching again
             setComments((prev)=> prev.filter((c)=> c.id!==commentId))
         }catch(err){
-            alert(err instanceof Error? err.message: "Failed to delete comment")
+            showToast(err instanceof Error? err.message: "Failed to delete comment")
         }
     }
 
@@ -145,137 +164,204 @@ const PostPage = () => {
 
     if(isLoading){
         return (
-            <div className="flex justify-center py-20">
-                <p className="text-gray-400 text-sm">Loading Post...</p>
+            <div className="state-container">
+                <p className="meta-text">Loading Post...</p>
             </div>
         )
     }
 
     if(error || !post){
         return (
-            <div className="flex justify-center py-20">
-                <p className="text-red-500 text-sm">{error?? "Post not found"}</p>
+            <div className="state-container">
+                <p className="error-banner">{error?? "Post not found"}</p>
             </div>
         )
     }
     
     return (
-        <div className="flex flex-col gap-8 max-w-2xl mx-auto">
-            <div className="flex flex-col gap3">
+        <>
+            <ConfirmModal
+                isOpen = {deletePostOpen}
+                title="Delete post"
+                message="This post and all its comments will be permanently removed."
+                confirmLabel="Delete"
+                onConfirm={handleDeletePost}
+                onCancel={()=> setDeletePostOpen(false)}
+            />
+
+            <motion.article
+                initial={{ opacity: 0, y: 10}}
+                animate={{ opacity: 1, y: 0}}
+                transition={{ duration: 0.3}}
+                className="reading-column py-10 flex flex-col gap-8"
+            >
                 {post.banner_image && (
-                    <img src={post.banner_image} alt={post.title} className=" w-full h-64 object-cover rounded-lg" />
+                    <img 
+                        src={post.banner_image}
+                        alt={post.title}
+                        className="w-full h-64 sm:h-80 object-cover"
+                    />
                 )}
-                <h1 className="text-3xl font-bold text-gray-900">{post.title}</h1>
-                
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                    <span>
-                        by <span className="font-medium text-gray-700">{post.author_username}</span>
-                        {" . "}
-                        {new Date(post.created_at).toLocaleDateString()}
-                    </span>
 
-                    {/* may edit if author or admin */}
-                    {canModifyPost && (
-                        <div className="flex items-center gap-3">
-                            <Link to={`/posts/${post.id}/edit`} className="text-sm text-blue-600 hover:underline">Edit</Link>
-                            <button onClick={handleDeletePost} className="text-red-500 hover:underline text-sm">Delete</button> 
-                        </div>
-                    )}
-                </div>
-            </div>
-        
-        {/* the body */}
-            <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">{post.content}</div>
-            <div className="flex items-center gap-2">
-                <button 
-                    onClick={handleLike}
-                    className={`px-4 py1.5 rounded-sm text-sm font-medium transition-colors ${liked ? "bg-blue-600 text-white border-blue-600": "border-gray-300 text-gray-600 hover:border-blue-400"}`}    
-                >
-                    {liked? "liked" : "like"}
-                </button>
-                <span className="text-sm text-gray-500">{likeCount} likes</span>
-            </div>
-            <hr className="border-gray-200"/>
-            {/* Comments section */}
-
-            <div className="flex flex-col gap-6">
-                <h2 className="text-lg font-semibold text-gray-900">Comments ({topLevelComments.length})</h2>
-            </div>
-
-            {/* a comment form for logged in users */}
-            {user ? (
-                <form onSubmit={handleAddComment} className="flex flex-col gap-2">
-                    <textarea value={commentContent} onChange={(e)=> setCommentContent(e.target.value)}  placeholder="Write a comment..." rows={3} className="border border-gray-300 rounded-sm placeholder-zinc-300 py-2 text-sm resize-none focus:ring-2 focus:ring-blue-500"/>
-                
-                    {commentError && (
-                        <p className="text-red-500 text-xs">{commentError}</p>
-                    )}
-                    <button type="submit" disabled={commentLoading || !commentContent.trim()} className="self-end px-4 py-1.5 bg-blue-600 text-white text-sm rounded-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                        {commentLoading? "Posting..." : "Post comment"}
-                    </button>
-                </form>
-            ): (
-                <p className="text-sm text-gray-500">
-                    <Link to="/login">Login</Link>{" "}to leave a comment.
-                </p>
-            )}
-
-            {/* list of comments */}
-            {topLevelComments.length===0? (
-                <p className="text-sm text-gray-400">No comments yet.</p>
-            ):(
                 <div className="flex flex-col gap-4">
-                    {topLevelComments.map((comment)=>(
-                        <div className="flex flex-col gap-2" key={comment.id}>
-                            {/* top level components first */}
-                            <CommentItem
-                                comment={comment}
-                                canModify={!!canModifyComment(comment)}
-                                onDelete={()=> handleDeleteComment(comment.id)}
-                                onReply={()=> {
-                                    setReplyingTo(replyingTo=== comment.id? null : comment.id)
-                                    setReplyContent("")
-                                }}
-                                showReplyButton={!!user}
-                            />
+                    <h1 className="heading-hero">{post.title}</h1>
+                
+                    <div className="flex items-center justify-between flex-wrap gap-3">
+                        <div className="flex items-center gap-3">
+                            <div className={`avatar-md ${getAvatarColor(post.author_username)}`}>
+                                <span className="avatar-initial text-sm!">
+                                    {post.author_username.charAt(0).toUpperCase()}
+                                </span>
+                            </div>
+                        
 
-                            {/* a reply form in case the comment is being replied to */}
-                            { replyingTo === comment.id && (
-                                <form onSubmit={(e)=> handleAddReply(e, comment.id)} className="ml-8 flex flex-col gap-2">
-                                    <textarea 
-                                        value={replyContent}
-                                        onChange={(e)=> setReplyContent(e.target.value)}
-                                        placeholder={`Replying to ${comment.author_username}...`}
-                                        rows={2}
-                                        className="border border-gray-300 rounded-sm px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    />
+                            <div className="flex flex-col">
+                                <span className="text-sm font-medium font-sans text-primary">{post.author_username}</span>
+                                <span className="meta-text">{formatDate(post.created_at)} · {getReadTime(post.content)}</span>
+                            </div>
+                        </div>
 
-                                    <div className="flex gap-2 self-end">
-                                        <button type="button" onClick={()=> setReplyingTo(null)}>Cancel</button>
-                                        <button type="submit" disabled={replyLoading || !replyContent.trim()} className="px-4 py-1 bg-blue-600 text-white text-sm rounded-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                                            {replyLoading? "Posting...": "Reply"}
-                                        </button>
-                                    </div>
-                                </form>
+                        {canModifyPost && (
+                            <div className="flex items-center gap-3">
+                                <Link to={`/posts/${post.id}/edit`} className="flex items-center gap-1.5 meta-text hover:text-accent transition-colors">
+                                    <Edit2 size={14}/> <span className="text-xs">Edit</span>
+                                </Link>
+                                <button type="button" onClick={()=> setDeletePostOpen(true)} className="flex items-center gap-1.5 btn-danger text-xs!">
+                                    <Trash2 size={14}/> Delete
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <hr className="divider" />
+
+                {/* body of the post now */}
+                <div className="prose">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {post.content}
+                    </ReactMarkdown>
+                </div>
+
+                <hr className="divider" />
+                
+                <div className="flex items-center gap-4">
+                    <motion.button
+                        type="button"
+                        onClick={handleLike}
+                        whileTap={{scale: 0.85}}
+                        transition={{ type: 'spring', stiffness: 400, damping: 17}}
+                        aria-label={liked? "Unlike post": "Like post"}
+                        className={`flex items-center gap-2 transition-colors ${liked? "text-danger": "text-muted hover:text-danger"}`}
+                    >
+                        <Heart size={18}
+                            className="transition-all"
+                            fill={liked? "currentColor": "none"}
+                            strokeWidth={liked? 0 : 1.5}
+                        />
+                        <span className="text-sm font-sans">{likeCount}</span>
+                    </motion.button>
+
+                    <div className="flex items-center gap-2 text-muted">
+                        <MessageCircle size={18} strokeWidth={1.5}/>
+                        <span className="text-sm font-sans">{topLevelComments.length}</span>
+                    </div>
+                </div>
+
+                <hr className="divider" />
+
+                    {/* comments */}
+                <div className="flex flex-col gap-6">
+                        <h2 className="heading-section text-lg">
+                            Comments ({topLevelComments.length})
+                        </h2>
+                        {user? (
+                            <form onSubmit={handleAddComment} className="flex flex-col gap-2">
+                                <textarea
+                                    value={commentContent}
+                                    onChange={(e)=> setCommentContent(e.target.value)}
+                                    placeholder="Share your thoughts..."
+                                    rows={3}
+                                    className="input-field resize-none"
+                                />
+
+                                {commentError && (
+                                    <p role="alert" className="text-danger">{commentError}</p>
                                 )}
+                                <button type="submit" disabled={commentLoading || !commentContent.trim()} className="btn-primary self-end py-1.5! px4! text-xs!">
+                                    {commentLoading? "Posting": "Post comment"}
+                                </button>
+                            </form>
+                        ): (
+                            <p className="meta-text">
+                                <Link to="/login" className="text-accent hover:underline underline-offset-2">Sign in</Link> {" "}to leave a comment
+                            </p>
+                        )}
 
-                                {/* we would indent replies under their parent, creating the thread view or feeling */}
-                                {getReplies(comment.id).map(reply=>(
-                                    <div className="ml-8" key={reply.id}>
+                        {topLevelComments.length===0 ? (
+                            <p className="meta-text italic">No comments yet. You may be the first to write one.</p>
+                        ): (
+                            <div className="flex flex-col gap-6">
+                                {topLevelComments.map(comment => (
+                                    <div key={comment.id} className="flex flex-col gap-4">
                                         <CommentItem
-                                            comment={reply}
-                                            canModify={!!canModifyComment(reply)}
-                                            onDelete={() => handleDeleteComment(reply.id)}
-                                            // Replies cannot be replied to so...
-                                            showReplyButton={false}
+                                            comment={comment}
+                                            canModify={!!canModifyComment}
+                                            onDelete={()=> handleDeleteComment(comment.id)}
+                                            onReply={()=> {
+                                                setReplyingTo(replyingTo === comment.id? null : comment.id)
+                                                setReplyContent("")
+                                            }}
+                                            showReplyButton={!!user}
                                         />
+
+                                        {replyingTo === comment.id && (
+                                            <form onSubmit={e=> handleAddReply(e, comment.id)} className="ml-10 border-l-2 border-border pl-4 flex flex-col gap-2">
+                                                <textarea
+                                                    value={replyContent}
+                                                    onChange={e=> setReplyContent(e.target.value)}
+                                                    placeholder={`Replying to ${comment.author_username}...`}
+                                                    rows={2}
+                                                    className="input-field resize-none text-sm"
+                                                />
+
+                                                <div className="flex gap-2 self-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={()=> setReplyingTo(null)}
+                                                        className="btn-ghost px-3! py-1! text-xs!"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                    <button
+                                                        type="submit"
+                                                        disabled={replyLoading || !replyContent.trim()}
+                                                        className="btn-primary px-3! py-1! text-xs!"
+                                                    >
+                                                        {replyLoading? "Posting...": "Reply"}
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        )}
+
+                                        {getReplies(comment.id).map(reply=>(
+                                            <div className="ml-10 border-l-2 border-border pl-4">
+                                                <CommentItem
+                                                    comment={reply}
+                                                    canModify={!!canModifyComment(reply)}
+                                                    onDelete={()=> handleDeleteComment(reply.id)}
+                                                    showReplyButton={false}
+                                                />
+                                            </div>
+                                        ))}
                                     </div>
                                 ))}
-                        </div>
-                    ))}
+                            </div>
+                        )}
                 </div>
-            )}
-        </div>
+            </motion.article>
+            
+        </>
     );
 }
  
