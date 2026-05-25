@@ -73,7 +73,9 @@ const PostForm = ({initialValues, onSubmit, submitLabel, isLoading, error}: Post
         {icon: <Minus size={14}/>, label: "Divider", action: ()=> injectWrap("\n\n---\n\n", "", "")},
         {icon: <StrikethroughIcon size={14}/>, label: "StrikeThrough", action: ()=> injectWrap("~~", "~~", "strikethrough text")},
         {icon: <Code2 size={14}/>, label: "Code Block", action: ()=> injectWrap("\n```\n", "\n```\n", "code here")},
-        {icon: <Link size={14}/>, label: "Link", action: ()=> injectWrap("[", "](url)", "link text")}
+        {icon: <Link size={14}/>, label: "Link", action: ()=> injectWrap("[", "](url)", "link text")},
+        {icon: <Image size={14} />, label: "Image", action: () => injectWrap("![", "](url)", "alt text") },
+
     ]
     
     return (
