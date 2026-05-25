@@ -16,7 +16,7 @@ interface ToastContextValue {
 
 const ToastContext = createContext<ToastContextValue | null>(null)
 
-export const ToastProvider = ({children}: {children: React.ReactNode}): ToastContextValue => {
+export const ToastProvider = ({children}: {children: React.ReactNode}) => {
     
     const [toasts, setToasts] = useState<ToastItem[]>([])
     const counter = useRef(0)
