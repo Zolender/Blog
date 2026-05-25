@@ -186,16 +186,21 @@ Before writing a single query, we must define how our data lives together.
 - [x] Build `FloatingInput` component (animated label)
 - [x] Build `PostCard` with skeleton, avatar, read time, engagement row
 - [x] Build `SkeletonCard` and `PullQuote` as standalone components
-- [x] Extract shared helpers into `src/utils/formatting.ts`
+- [x] Extract shared helpers into `src/utils/formatting.tsx`
 - [x] Merge Login and Register into single `AuthPage` with tab toggle
 - [x] Apply design system to Feed page — hero, pull quote, grid, pagination
-- [ ] Apply design system to Single Post page (reading layout, comments)
-- [ ] Apply design system to Create/Edit Post page
+- [x] Apply design system to Create/Edit Post page — writer mode, markdown toolbar, preview toggle
+- [x] Install `react-markdown` + `remark-gfm` — markdown rendering in preview and post body
+- [x] Build `WriterLayout` — distraction-free layout for write/edit routes
+- [x] Add `prose` utility to `index.css` for markdown rendering
+- [ ] Build `ConfirmModal` component — reusable modal for destructive actions
+- [ ] Build `Toast` system — lightweight success/error feedback
+- [ ] Apply design system to Single Post page (reading layout, markdown body, comments)
 - [ ] Apply design system to Admin page
 - [ ] Build 404 page
 - [ ] Add page titles per route (`document.title`)
 - [ ] Add Open Graph tags to Single Post page
-- [ ] Mobile responsive pass — all pages tested at 375px, 768px, 1280px
+- [ ] Mobile responsive — inline with every page implementation
 
 ---
 
@@ -243,9 +248,9 @@ frontend/
 ├── src/
 │   ├── api/            ← HTTP call modules
 │   ├── app/            ← Redux store and typed hooks
-│   ├── components/     ← Reusable UI (Navbar, PostCard, SkeletonCard...)
+│   ├── components/     ← Reusable UI (Navbar, PostCard, SkeletonCard, ConfirmModal, Toast...)
 │   ├── features/       ← Redux slices (auth)
-│   ├── layouts/        ← RootLayout (Navbar + Outlet + Footer)
+│   ├── layouts/        ← RootLayout, WriterLayout
 │   ├── pages/          ← Page-level components
 │   ├── types/          ← Shared TypeScript interfaces
 │   ├── utils/          ← Shared helpers (formatting, avatar colors)
@@ -258,10 +263,10 @@ frontend/
 ## 7. UI Enhancements
 
 ### Icons (Lucide React)
-- Navbar (Menu, X, Rss, PenLine, Shield, LogIn, LogOut, UserPlus)
-- Post page (Heart, MessageCircle, Edit2, Trash2)
-- Feed page (RefreshCcw)
-- Write page (Image, ArrowLeft, X)
+- Navbar: Menu, X, Rss, PenLine, Shield, LogIn, LogOut, UserPlus
+- Post page: Heart, MessageCircle, Edit2, Trash2
+- Feed page: RefreshCcw
+- Write page: ArrowLeft, Eye, Edit2, Bold, Italic, Heading2, Code, Code2, Quote, Minus, List, Link, Strikethrough, Image
 
 ### UX Considerations
 - Show/hide actions based on role and ownership
@@ -270,6 +275,8 @@ frontend/
 - Skeleton loaders during data fetching (not spinners)
 - Empty states for zero-result screens
 - Error states with retry for failed fetches
-- Inline confirmation for destructive actions (no browser `confirm()` or `alert()`)
+- Modal confirmation for all destructive actions (no `window.confirm()` or `window.alert()`)
+- Toast notifications for post-action feedback (success/failure)
 - Framer Motion page transitions and micro-interactions
-- Mobile-first responsive
+- Mobile-first responsive — implemented inline per page, not as a separate pass
+- Markdown support in post body — written with toolbar, rendered with `react-markdown` + `remark-gfm`

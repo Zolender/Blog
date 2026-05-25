@@ -48,7 +48,7 @@ When in doubt about a color, font, spacing value, or component structure — che
 }
 ```
 
->  This project uses **Tailwind CSS v4**. There is no `tailwind.config.ts`.
+> This project uses **Tailwind CSS v4**. There is no `tailwind.config.ts`.
 > All tokens live in `@theme {}` inside `frontend/src/index.css`.
 > All reusable class patterns live in `@utility {}` blocks in the same file.
 > Never use inline `style={{}}` for values that belong to the design system.
@@ -147,8 +147,8 @@ Mobile-first. Write base styles for mobile, then override with `sm:` and `lg:`.
 - Desktop: `max-w-md mx-auto` centered card
 
 **Create / Edit post**
-- Mobile: full width, sticky top bar with Publish button
-- Desktop: `reading-column` centered, Publish in top bar
+- Mobile: full width, sticky top bar with Publish button, word count hidden (shown at bottom)
+- Desktop: `reading-column` centered, word count in top bar
 
 ---
 
@@ -204,7 +204,7 @@ Two sizes defined as utilities:
 | `avatar-md` | `2.5rem` (40px) | Single post author header |
 
 Color is generated deterministically from the username string.
-Helper: `getAvatarColor(name)` in `src/utils/formatting.ts`.
+Helper: `getAvatarColor(name)` in `src/utils/formatting.tsx`.
 Initial text: `avatar-initial` utility.
 
 ### Buttons
@@ -220,13 +220,54 @@ Initial text: `avatar-initial` utility.
 | Utility | Description |
 |---|---|
 | `input-field` | Standard bordered input with focus accent |
-| `textarea-field` | Same as input-field, resizable |
 | `write-title` | Transparent, serif, large — for post title in write mode |
 | `write-area` | Transparent, serif, for post body in write mode |
 
 **FloatingInput** — the `<FloatingInput>` component wraps `input-field` with an animated
 label that lifts to the top border on focus or when the field has a value.
 Used exclusively on the Auth page.
+
+### WriterLayout
+Distraction-free layout used by `/posts/new` and `/posts/:id/edit`.
+No Navbar. Replaced by a custom sticky top bar inside `PostForm`:
+- Left: back arrow + brand name
+- Right: word count (desktop only) + Write/Preview toggle + Publish/Save button
+
+### PostForm (Write / Edit)
+- Full canvas feel — borderless title textarea, bordered writing area
+- Sticky top bar with back, mode toggle, submit
+- Banner image URL input with live preview strip
+- Markdown toolbar: Bold, Italic, Strikethrough, Heading, Blockquote, Bullet list, Inline code, Code block, Link, Divider, Image
+- Preview mode renders content via `react-markdown` + `remark-gfm` inside `prose` utility
+- Word count — top bar on desktop, bottom of form on mobile
+
+### ConfirmModal
+Reusable modal for all destructive actions. Replaces `window.confirm()` everywhere.
+
+```tsx
+<ConfirmModal
+  title="Delete post"
+  message="This cannot be undone."
+  confirmLabel="Delete"
+  onConfirm={fn}
+  onCancel={fn}
+/>
+```
+
+- Framer Motion scale + fade entrance (`scale: 0.95→1, opacity: 0→1`)
+- Semi-transparent overlay behind modal (`bg-black/40`)
+- Cancel: `btn-ghost`, Confirm: `btn-primary` styled with danger colors
+- Full-width buttons stacked on mobile, inline on `sm:`
+- Tap outside overlay to cancel
+
+### Toast
+Lightweight feedback system for post-action results.
+
+- Positioned `fixed bottom-6 right-6` on desktop, `bottom-4 left-4 right-4` centered on mobile
+- Two variants: `success` (accent left border) and `error` (danger left border)
+- Auto-dismisses after 3 seconds
+- Framer Motion slide-up entrance, fade exit via `AnimatePresence`
+- Triggered via a `useToast` hook
 
 ### Pull Quote
 ```css
@@ -244,9 +285,17 @@ font-sans, small, white/60, mt-4
 ### CommentItem
 - No card border — separated by spacing only
 - Layout: `avatar` left, content right (`flex gap-3`)
-- Author + timestamp in same row
-- Inline confirm on delete (no `window.confirm()`)
-- Nested reply: `ml-10 border-l-2 border-border pl-4`
+- Author + timestamp in same row (`meta-text`)
+- Comment body: `body-text` at `text-sm`
+- Actions row: Reply (`nav-link` style), Delete (`btn-danger`)
+- Delete triggers `ConfirmModal`, not inline confirm
+- Nested reply indentation: `ml-10 border-l-2 border-border pl-4`
+
+### Prose (Markdown Renderer)
+`prose` utility in `index.css` — applied to any `ReactMarkdown` render container.
+
+Covers: headings, paragraphs, bold, italic, blockquotes, inline code, code blocks,
+lists, horizontal rules, links, images, tables (via `remark-gfm`), strikethrough, del.
 
 ### Error Banner
 ```css
@@ -259,7 +308,7 @@ padding: 0.75rem 1rem;
 
 ---
 
-## Shared Utilities — `src/utils/formatting.ts`
+## Shared Utilities — `src/utils/formatting.tsx`
 
 All helpers that are used across more than one component live here.
 
@@ -282,6 +331,9 @@ Keep it purposeful. Every animation must serve a reason.
 | Mobile nav panel | `x: 100%→0` slide from right |
 | PostCard hover | `whileHover={{ y: -2 }}` |
 | Like button tap | `whileTap={{ scale: 0.85 }}, spring` |
+| ConfirmModal entrance | `scale: 0.95→1, opacity: 0→1, duration: 0.2` |
+| Toast entrance | `y: 16→0, opacity: 0→1` slide up |
+| Toast exit | `opacity: 1→0, duration: 0.2` |
 
 No scroll animations, no staggered lists, no parallax for MVP.
 
@@ -298,8 +350,11 @@ Every data-fetching component handles four states:
 | **Empty** | `state-container` with serif message + CTA |
 | **Success** | Normal rendered state |
 
-Inline destructive actions (delete post, delete comment, delete user) use
-an inline confirm pattern — no `window.confirm()` or `window.alert()`.
+Destructive actions (delete post, delete comment, delete user) always go through
+`ConfirmModal`. Never `window.confirm()` or `window.alert()`.
+
+Post-action feedback uses the `Toast` system. Silent rollback for optimistic UI failures
+(e.g. like toggle) — no toast needed since the UI reverts automatically.
 
 ---
 
@@ -369,10 +424,24 @@ The gap signals the user can tap the overlay to dismiss it.
 Heavy shadows create elevation suited to dashboards. For editorial reading, flat borders
 keep focus on the content, not the UI chrome.
 
-**Why inline confirm instead of `window.confirm()`?**
-Browser native dialogs are unstyled, block the thread, and cannot be tested. Inline
-confirms stay in the design system and give us full control.
+**Why ConfirmModal instead of `window.confirm()`?**
+Browser native dialogs are unstyled, block the thread, and cannot be tested. A modal
+stays in the design system, works correctly on mobile with large tap targets, and gives
+us full control over copy and styling.
+
+**Why Toast for post-action feedback?**
+Toasts are feedback after an action, not before. They confirm something happened without
+blocking the user. Auto-dismiss keeps the UI clean.
+
+**Why inline confirm is wrong on mobile?**
+Inline confirm buttons rendered next to each other in a tight row cause mis-taps on
+small screens, especially for destructive actions. The modal gives proper tap target size.
 
 **Why `@utility` in Tailwind v4?**
 Defining reusable patterns as utilities keeps components clean — a single class name
 instead of 8 inline ones. When a style needs to change, it changes in one place.
+
+**Why markdown for post content?**
+Markdown gives writers formatting power without a complex rich text editor. It's portable,
+plain text under the hood, renders predictably, and keeps our bundle small. `react-markdown`
++ `remark-gfm` covers everything a blog writer needs.
