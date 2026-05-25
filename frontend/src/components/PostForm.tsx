@@ -1,5 +1,8 @@
-import { useState, type SubmitEvent } from "react"
-
+import { ArrowLeft, Bold, Code, Edit2, Eye, Heading2, Image, Italic, List, Minus, Quote } from "lucide-react"
+import { useCallback, useRef, useState, type SubmitEvent } from "react"
+import { useNavigate } from "react-router"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 interface PostFormValues {
     title: string
@@ -20,60 +23,168 @@ const PostForm = ({initialValues, onSubmit, submitLabel, isLoading, error}: Post
     const [title, setTitle] = useState(initialValues?.title??"")
     const [content, setContent] = useState(initialValues?.content?? "")
     const [banner_image, setBanner_image] = useState(initialValues?.banner_image??"")
+    const navigate = useNavigate()
+    const [isPreview, setIsPreview] = useState(false)
+    const textareaRef = useRef<HTMLTextAreaElement>(null)
+    const wordCount = content.trim() === ""? 0: content.trim().split(/\s+/).length
 
     const handleSubmit = async (e: SubmitEvent)=>{
         e.preventDefault()
         await onSubmit({title, content, banner_image})
     }
     
+
+    const injectWrap = useCallback((before: string, after: string, defaultText: string)=>{
+        const el = textareaRef.current
+        if(!el)return
+        const start = el.selectionStart
+        const end = el.selectionEnd
+        const selected = content.slice(start,end) || defaultText
+        const next = content.slice(0, start)+ before+ selected + after + content.slice(end)
+        setContent(next)
+        requestAnimationFrame(()=>{
+            el.focus()
+            const cur = start + before.length + selected.length
+            el.setSelectionRange(cur, cur)
+        })
+    }, [content])
+
+    const injectLinePrefix = useCallback((prefix: string)=>{
+        const el = textareaRef.current
+        if(!el)return
+        const start = el.selectionStart
+        const lineStart = content.lastIndexOf("\n", start-1)+ 1
+        const next = content.slice(0, lineStart) + prefix + content.slice(lineStart)
+        setContent(next)
+        requestAnimationFrame(()=> {
+            el.focus()
+            el.setSelectionRange(start + prefix.length, start + prefix. length)
+        })
+    }, [content])
+
+
+    const toolbarItems = [
+        {icon: <Bold size={14}/>, label: "Bold", action: ()=> injectWrap("**", "**", "bold text")},
+        {icon: <Italic size={14}/>, label: "Italic", action: ()=> injectWrap("*", "*", "italic text")},
+        {icon: <Heading2 size={14}/>, label: "Heading", action: ()=> injectLinePrefix("## ")},
+        {icon: <Code size={14}/>, label: "Inline code", action: ()=> injectWrap("`", "`", "code")},
+        {icon: <Quote size={14}/>, label: "Blockquote", action: ()=> injectLinePrefix("> ")},
+        {icon: <List size={14}/>, label: "List Item", action: ()=> injectLinePrefix("- ")},
+        {icon: <Minus size={14}/>, label: "Divider", action: ()=> injectWrap("\n\n---\n\n", "", "")},
+    ]
     
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            {error && (
-                <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-sm">{error}</div>
-            )}
-            <div className="flex flex-col gap-1">
-                <label htmlFor="title" className="text-sm font-medium text-gray-700">Title</label>
-                <input 
-                    type="text"
-                    id="title"
-                    required
-                    value={title}
-                    onChange={(e)=> setTitle(e.target.value)}
-                    className="border border-gray-300 rounded-sm px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-                />
-            </div>
+        <div className="min-h-screen flex flex-col">
 
-            <div className="flex flex-col gap-1">
-                <label htmlFor="banner_image" className="text-sm font-medium text-gray-700">
-                    Banner image URL
-                    <span className="ml-1 text-gray-400 font-normal">(optional)</span>
-                </label>
-                <input 
-                    type="url"
-                    id="banner_image"
-                    required
-                    value={banner_image}
-                    onChange={(e)=> setBanner_image(e.target.value)}
-                    placeholder="https://..."
-                    className="border border-gray-300 rounded-sm px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-                />
-            </div>
+            <header className="sticky top-0 z-10 bg-base border-b border-border">
+                <div className="page-wrapper h-14 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={()=> navigate(-1)}
+                            className="flex items-center gap-1.5 text-muted hover:text-primary transition-colors"
+                        >
+                            <ArrowLeft size={18}/>
+                            <span className="hidden sm:inline text-sm">Back</span>
+                        </button>
+                        <span className="text-border select-none">|</span>
+                        <span className="brand-name text-base!">Z-Tales</span>
+                    </div>
 
-            <div className="flex flex-col gap-1">
-                <label htmlFor="content" className="text-sm font-medium text-gray-700">Content</label>
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <span className="meta-text hidden sm:inline">{wordCount} words</span>
+                        <button
+                            type="button"
+                            onClick={()=> setIsPreview(value=> !value)}
+                            className="btn-ghost flex items-center gap-1.5 px-3! text-xs!"
+                        >
+                            {isPreview ? <><Edit2 size={12}/> Write</> : <><Eye size={12}/> Preview</>}
+                        </button>
+                        <button 
+                            className="btn-primary px-4! py-1.5! text-xs!"
+                            type="submit"
+                            form="post-form"
+                            disabled={isLoading}
+                        
+                        >
+                            {isLoading ? "Saving...": submitLabel}
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+
+            <form id="post-form" onSubmit={handleSubmit} className="flex-1 reading-column py-10 flex flex-col">
+                {error && (
+                    <div className="error-banner">{error}</div>
+                )}
+
+                <div className="flex flex-col gap-0">
+                    <div className="flex items-center gap-2 py-2">
+                        <Image size={13} className="text-muted shrink-0" />
+                        <input 
+                            type="url"
+                            value={banner_image}
+                            onChange={(e)=> setBanner_image(e.target.value)}
+                            placeholder="Paste a banner image URL..."
+                            className="flex-1 bg-transparent border-none outline-none text-sm text-muted placeholder:text-muted/50 font-sans"
+                        />
+                    </div>
+                    {banner_image && <img 
+                        src={banner_image}
+                        alt="Banner preview"
+                        className="w-full h-44 object-cover"
+                        onError={e=> (e.currentTarget.style.display="none")}
+                    />}
+                </div>
+                <hr className="divider"/>
+
                 <textarea 
-                    id="content"
+                    value={title}
+                    onChange={e => setTitle(e.target.value)}
+                    placeholder="Title"
                     required
-                    rows={12}
-                    value={content}
-                    onChange={(e)=> setContent(e.target.value)}
-                    className="border border-gray-300 rounded-sm px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+                    rows={2}
+                    className="w-full bg-transparent border-none outline-none heading-hero placeholder:text-muted/30 leading-tight"                
                 />
-            </div>
+                
+                <hr className="divider"/>
 
-            <button className="self-start px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled={isLoading} type="submit">{isLoading? "Saving": submitLabel}</button>
-        </form>
+                {!isPreview && (
+                    <div className="flex items-center gap-0.5 flex-wrap -mx-1">
+                        {toolbarItems.map(item=>(
+                            <button 
+                                className="p-2 text-muted hover:text-primary hover:bg-surface transition-colors rounded-sm"
+                                key={item.label}
+                                type="button"
+                                title={item.label}
+                                onClick={item.action}
+                            >
+                                {item.icon}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {isPreview ? (
+                    <div className="prose min-h-[60vh] pt-2">
+                        {content.trim()? <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>:
+                            <p className="meta-text italic">Nothing to preview yet.</p>}
+                    </div>
+                ): (
+                    <textarea
+                        ref={textareaRef}
+                        value={content}
+                        onChange={(e)=> setContent(e.target.value)}
+                        placeholder="Begin you narrative here..."
+                        required
+                        rows={28}
+                        className="w-full bg-transparent border-none outline-none resize body-text placeholder:text-muted/30"
+                    />
+                )}
+                <p className="meta-text sm:hidden">{wordCount} words</p>
+            </form>
+        </div>
     );
 }
  
