@@ -32,15 +32,12 @@ const NewPostPage = () => {
 
 
     return (
-        <div className="max-w-2xl mx-auto flex flex-col gap-6">
-            <h1 className="text-2xl font-bold text-gray-900">Write a post</h1>
             <PostForm
                 onSubmit={handleSubmit}
                 submitLabel="Publish"
                 isLoading={isLoading}
                 error={error}
             />
-        </div>
     );
 }
  

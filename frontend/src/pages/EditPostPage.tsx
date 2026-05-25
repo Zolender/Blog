@@ -79,8 +79,6 @@ const EditPostPage = () => {
 
 
     return (
-        <div className="max-w-2xl mx-auto flex flex-col gap-6">
-            <h1 className="text-2xl font-bold text-gray-900">Edit Post</h1>
             <PostForm
                 initialValues={{
                     title: post.title,
@@ -92,7 +90,6 @@ const EditPostPage = () => {
                 isLoading={isLoading}
                 error={error}
             />
-        </div>
     );
 }
  
