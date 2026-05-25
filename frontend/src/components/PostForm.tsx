@@ -155,21 +155,7 @@ const PostForm = ({initialValues, onSubmit, submitLabel, isLoading, error}: Post
                 
                 <hr className="divider"/>
 
-                {!isPreview && (
-                    <div className="flex items-center gap-0.5 flex-wrap -mx-1">
-                        {toolbarItems.map(item=>(
-                            <button 
-                                className="p-2 text-muted hover:text-primary hover:bg-surface transition-colors rounded-sm"
-                                key={item.label}
-                                type="button"
-                                title={item.label}
-                                onClick={item.action}
-                            >
-                                {item.icon}
-                            </button>
-                        ))}
-                    </div>
-                )}
+                
 
                 {isPreview ? (
                     <div className="prose min-h-[60vh] pt-2">
@@ -177,15 +163,31 @@ const PostForm = ({initialValues, onSubmit, submitLabel, isLoading, error}: Post
                             <p className="meta-text italic">Nothing to preview yet.</p>}
                     </div>
                 ): (
-                    <textarea
-                        ref={textareaRef}
-                        value={content}
-                        onChange={(e)=> setContent(e.target.value)}
-                        placeholder="Begin you narrative here..."
-                        required
-                        rows={28}
-                        className="w-full bg-transparent border-none outline-none resize body-text placeholder:text-muted/30"
-                    />
+                    <div className="flex flex-col border border-border bg-white">
+                        <div className="flex items-center gap-0.5 flex-wrap px-3 py-2 border-b border-border">
+                            {toolbarItems.map(item => (
+                                <button
+                                    key={item.label}
+                                    type="button"
+                                    title={item.label}
+                                    onClick={item.action}
+                                    className="p-2 text-muted hover:text-primary hover:bg-surface transition-colors rounded-sm"
+                                >
+                                    {item.icon}
+                                </button>
+                            ))}
+                        </div>
+
+                        <textarea
+                            ref={textareaRef}
+                            value={content}
+                            onChange={e => setContent(e.target.value)}
+                            placeholder="Begin your narrative here..."
+                            required
+                            rows={28}
+                            className="w-full bg-transparent border-none outline-none resize-none body-text placeholder:text-muted/30 p-5"
+                        />
+                    </div>
                 )}
                 <p className="meta-text sm:hidden">{wordCount} words</p>
             </form>
