@@ -10,7 +10,6 @@ import { useToast } from "../components/Toast";
 import ConfirmModal from "../components/ConfirmModal";
 import { motion } from "framer-motion";
 import { formatDate, getAvatarColor, getReadTime } from "../utils/formatting";
-import { div } from "framer-motion/client";
 import { Edit2, Heart, MessageCircle, Trash2 } from "lucide-react";
 
 
@@ -96,7 +95,7 @@ const PostPage = () => {
             showToast("Post deleted successfully")
             navigate("/")
         }catch(err){
-            showToast(err instanceof Error ? err.message: "Failed to delete post")
+            showToast(err instanceof Error ? err.message: "Failed to delete post", "error")
         }
     }
 
@@ -133,7 +132,7 @@ const PostPage = () => {
             setReplyContent("")
             setReplyingTo(null)
         }catch(err){
-            showToast(err instanceof Error? err.message: "Failed to add reply")
+            showToast(err instanceof Error? err.message: "Failed to add reply", "error")
         }finally{
             setReplyLoading(false)
         }
@@ -147,7 +146,7 @@ const PostPage = () => {
             //we would remove it from the local state without refetching again
             setComments((prev)=> prev.filter((c)=> c.id!==commentId))
         }catch(err){
-            showToast(err instanceof Error? err.message: "Failed to delete comment")
+            showToast(err instanceof Error? err.message: "Failed to delete comment", "error")
         }
     }
 

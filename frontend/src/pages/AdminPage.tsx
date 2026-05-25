@@ -2,17 +2,26 @@ import { useEffect, useState } from "react";
 import { useAppSelector } from "../app/hooks";
 import type { User } from "../types";
 import { adminApi } from "../api/admin";
+import { useToast } from "../components/Toast";
 
 
 const AdminPage = () => {
     const {user: currentUser} = useAppSelector((state)=> state.auth)
+    const {showToast} = useToast()
 
     const [users, setUsers] = useState<User[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [updatingRoleId, setUpdatingRoleId] = useState<number | null>(null)
     const [deletingId, setDeletingId] = useState<number | null>(null)
+    const [targetUser, setTargetUser] = useState<User | null>(null)
+    const [deleteOpen, setDeleteOpen] = useState(false)
 
+
+    useEffect(()=> {
+        document.title = "Admin - Z-Tales"
+        return()=> {document.title = "Z-Tales"}
+    }, [])
 
     useEffect(()=>{
         const fetchUsers = async()=>{
@@ -33,32 +42,40 @@ const AdminPage = () => {
     }, [])
 
 
+    const openDeleteConfirm = (user: User)=> {
+        setTargetUser(user)
+        setDeleteOpen(true)
+    }
+
     const handleDelete = async (targetUser: User)=>{
-        if(!confirm(`Are you sure you want to delete ${targetUser.username}? This operation isn't reversible`))return
-        
+        if(!targetUser) return        
+        setDeleteOpen(false)
         setDeletingId(targetUser.id)
         
         try{
             await adminApi.deleteUser(targetUser.id)
             //without refreshing set the userlist to... u know what i mean
             setUsers((prev)=> prev.filter(user=> user.id!==targetUser.id))
+            showToast(`${targetUser.username} has been removed`)
         }catch(err){
-            alert(err instanceof Error? err.message : "Failed to delete user")
+            showToast(err instanceof Error? err.message : "Failed to delete user", "error")
         }finally{
             setDeletingId(null)
+            setTargetUser(null)
         }
     }
 
 
-    const handleRoleChange =  async (targetUser: User, newRole: "user" | "admin")=>{
-        if(newRole === targetUser.role)return
-        setUpdatingRoleId(targetUser.id)
+    const handleRoleChange =  async (user: User, newRole: "user" | "admin")=>{
+        if(newRole === user.role)return
+        setUpdatingRoleId(user.id)
 
         try{
-            const data = await adminApi.updataRole(targetUser.id, newRole)
-            setUsers(prev=> prev.map(u=> u.id === targetUser.id? data.user: u))
+            const data = await adminApi.updataRole(user.id, newRole)
+            setUsers(prev=> prev.map(u=> u.id === user.id? data.user: u))
+            showToast(`${user.username} is now ${newRole === 'admin' ? "an admin" : "a user"}`)
         }catch(err){
-            alert(err instanceof Error? err.message : "Failed to update role")
+            showToast(err instanceof Error? err.message : "Failed to update role", "error")
         }finally{
             setUpdatingRoleId(null)
         }
@@ -67,16 +84,16 @@ const AdminPage = () => {
 
     if(isLoading){
         return (
-            <div className="flex justify-center py-20">
-                <p className="text-gray-400 text-sm">Loading users...</p>
+            <div className="state-container">
+                <p className="meta-text">Loading users...</p>
             </div>
         )
     }
 
     if(error){
         return (
-            <div className="flex justify-center py-20">
-                <p className="text-red-500 text-sm">{error}</p>
+            <div className="state-container">
+                <p className="error-banner">{error}</p>
             </div>
             )
         }
