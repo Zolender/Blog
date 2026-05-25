@@ -3,6 +3,9 @@ import { useAppSelector } from "../app/hooks";
 import type { User } from "../types";
 import { adminApi } from "../api/admin";
 import { useToast } from "../components/Toast";
+import ConfirmModal from "../components/ConfirmModal";
+import { motion } from "framer-motion";
+import { formatDate, getAvatarColor } from "../utils/formatting";
 
 
 const AdminPage = () => {
@@ -47,7 +50,7 @@ const AdminPage = () => {
         setDeleteOpen(true)
     }
 
-    const handleDelete = async (targetUser: User)=>{
+    const handleDelete = async ()=>{
         if(!targetUser) return        
         setDeleteOpen(false)
         setDeletingId(targetUser.id)
@@ -101,82 +104,97 @@ const AdminPage = () => {
 
 
         return (
-            <div className="flex flex-col gap-6 ">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-                    <span className="text-sm text-gray-500">{users.length} users total</span>
-                </div>
+            <>
+                <ConfirmModal 
+                    isOpen={deleteOpen}
+                    title={`Delete ${targetUser?.username ?? "user"}`}
+                    message="Their account and all associated data will be permanently removed."
+                    confirmLabel="Delete"
+                    onConfirm={handleDelete}
+                    onCancel={()=> {
+                        setDeleteOpen(false)
+                        setTargetUser(null)
+                    }}
+                />
+                <motion.div
+                    initial={{opacity: 0, y: 10}}
+                    animate={{opacity: 1, y: 0}}
+                    transition={{ duration: 0.3}}
+                    className="page-wrapper py-10 flex flex-col gap-6"
+                >
 
-                {users.length === 0? (
-                    <p className="text-gray-400 text-sm py-10 text-center">No user found.</p>
-                ): (
-                    <div className="border border-gray-200 rounded-lg overflow-hidden">
-                        <table className="w-full text-sm">
-                            <thead className=" bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-600">User</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-600">Email</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-600">Role</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-600">Joined</th>
-                                    <th className="text-left px-4 py-3 font-medium text-gray-600">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {users.map(user=>{
-                                    const isSelf = user.id === currentUser?.id
-
-                                    return(
-                                        <tr  key={user.id} className={isSelf? "bg-blue-50" : "bg-white"}>
-                                            <td className="px-4 py-3 font-medium text-gray-900">
-                                                {user.username}
-                                                {isSelf && (
-                                                    <span className="ml-2 text-xs text-blue-500 font-normal">(you)</span>
-                                                )}
-                                            </td>
-                                            
-                                            <td className="px-4 py-3 text-gray-500">{user.email}</td>
-                                                
-                                            <td className="px-4 py-3">
-                                                {isSelf ? (
-                                                    <span className="text-gray-700">{user.role}</span>
-                                                ):(
-                                                    <select
-                                                        value= {user.role}
-                                                        disabled = {updatingRoleId== user.id}
-                                                        onChange={(e)=> handleRoleChange(user, e.target.value as "user" | "admin")}
-                                                        className="border border-gray-300 rounded-sm px-2 py-1 text-sm focus:outline-none focus:right-2 focus:ring-blue-500 disabled:opacity-50"
-                                                    >
-                                                        <option value="user">user</option>
-                                                        <option value="admin">admin</option>
-                                                    </select>
-                                                )}
-                                            </td>
-
-                                            <td className="px-4 py-3 text-gray-500">
-                                                {new Date(user.created_at).toLocaleDateString()}
-                                            </td>
-
-                                            <td className="px-4 py-3">
-                                                {isSelf?(
-                                                    <span className="text-xs text-gray-300">-</span>
-                                                ): (
-                                                    <button 
-                                                        onClick={()=> handleDelete(user)}
-                                                        disabled={deletingId === user.id}
-                                                        className="text-red-500 hover:underline text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    >
-                                                        {deletingId === user.id? "Deleting...": "Delete"}
-                                                    </button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    )
-                                })}
-                            </tbody>
-                        </table>
+                    <div className="flex items-center justify-between">
+                        <h1 className="heading-section">Admin Dashboard</h1>
+                        <span className="meta-text">{users.length}</span>
                     </div>
-                )}
-            </div>
+                    <hr className="divider" />
+
+                    {users.length === 0 ? (
+                        <div className="state-container">
+                            <p className="meta-text italic">No users found.</p>
+                        </div>
+                    ): (
+                        <>
+                             {/* on mobile we shall have them listed in a card layout */}
+
+                            <div className="flex flex-col gap-3 sm:hidden">
+                                {users.map(user => {
+                                    const isSelf = user.id === currentUser?.id
+                                    return (
+                                        <div
+                                            key={user.id} 
+                                            className={`border border-border p-4 flex flex-col gap-3 ${isSelf ? "bg-surface": "bg-white"}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`avatar ${getAvatarColor(user.username)}`}>
+                                                    <span className="avatar-initial">{user.username.charAt(0).toUpperCase()}</span>
+                                                </div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="text-sm font-medium font-sans text-primary truncate">{user.username}</span>
+                                                        {isSelf && <span className="badge text-xs!">you</span>}
+                                                        {user.role === "admin" && (
+                                                            <span className="badge-admin text-xs!">admin</span>
+                                                        )}
+                                                    </div>
+                                                    <span className="meta-text truncate">{user.email}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-between flex-wrap gap-2">
+                                                <span className="meta-text">Joined {formatDate(user.created_at)}</span>
+                                            {/* role selecting */}
+                                            {isSelf && (
+                                                <select 
+                                                    value={user.role}
+                                                    disabled= {updatingRoleId === user.id}
+                                                    onChange={e=> handleRoleChange(user, e.target.value as "user" | "admin")}
+                                                    className="input-field w-auto! py-1! px-2! text-xs! disabled:opacity-50"
+                                                >
+                                                    <option value="user">user</option>
+                                                    <option value="admin">admin</option>
+                                                </select>
+                                            )}
+                                            </div>
+                                            {/* deleting a user */}
+                                            {!isSelf && (
+                                                <button
+                                                    type="button"
+                                                    onClick={()=> openDeleteConfirm(user)}
+                                                    disabled={deletingId === user.id}
+                                                    className="btn-danger self-start text-xs! disabled:opacity-50"
+                                                >
+                                                    {deletingId == user.id ? "Deleting": "Delete user"}
+                                                </button>
+                                            )}
+                                        </div>
+                                    ) 
+                                })}
+                            </div>
+                        </>
+                    )}
+                </motion.div>
+            </>
         )
     }
     
