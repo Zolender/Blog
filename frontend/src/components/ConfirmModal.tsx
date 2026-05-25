@@ -49,7 +49,14 @@ const ConfirmModal = ({isOpen, title, message, confirmLabel="Confirm", onConfirm
                                         onClick={onCancel}
                                         className="btn-ghost w-full sm:w-auto"
                                     >   
-        
+                                        Cancel    
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={onConfirm}
+                                        className="btn-primary w-full sm:w-auto bg-danger! hover:bg-danger-hover!"
+                                    >   
+                                        {confirmLabel}
                                     </button>
                                 </div>
                             </div>
