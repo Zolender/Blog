@@ -66,3 +66,5 @@ const ConfirmModal = ({isOpen, title, message, confirmLabel="Confirm", onConfirm
         </AnimatePresence>
     )
 }
+
+export default ConfirmModal
