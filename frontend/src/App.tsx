@@ -5,7 +5,7 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import RootLayout from "./layouts/RootLayout";
 import FeedPage from "./pages/FeedPage";
 import PostPage from "./pages/PostPage";
-import GuestRoute from "./components/guestRout";
+import GuestRoute from "./components/guestRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NewPostPage from "./pages/NewPostPage";
 import EditPostPage from "./pages/EditPostPage";
