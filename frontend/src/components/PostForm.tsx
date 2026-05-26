@@ -1,4 +1,4 @@
-import { ArrowLeft, Bold, Code, Code2, Edit2, Eye, Heading2, Image, Italic, Link, List, Minus, Quote, StrikethroughIcon } from "lucide-react"
+import { ArrowLeft, Bold, Code, Code2, Edit2, Eye, Heading2, Image, Italic, Link as LinkIcon, List, Minus, Quote, StrikethroughIcon } from "lucide-react"
 import { useCallback, useRef, useState, type SubmitEvent } from "react"
 import { useNavigate } from "react-router"
 import ReactMarkdown from "react-markdown"
@@ -73,7 +73,7 @@ const PostForm = ({initialValues, onSubmit, submitLabel, isLoading, error}: Post
         {icon: <Minus size={14}/>, label: "Divider", action: ()=> injectWrap("\n\n---\n\n", "", "")},
         {icon: <StrikethroughIcon size={14}/>, label: "StrikeThrough", action: ()=> injectWrap("~~", "~~", "strikethrough text")},
         {icon: <Code2 size={14}/>, label: "Code Block", action: ()=> injectWrap("\n```\n", "\n```\n", "code here")},
-        {icon: <Link size={14}/>, label: "Link", action: ()=> injectWrap("[", "](url)", "link text")},
+        {icon: <LinkIcon size={14}/>, label: "Link", action: ()=> injectWrap("[", "](url)", "link text")},
         {icon: <Image size={14} />, label: "Image", action: () => injectWrap("![", "](url)", "alt text") },
 
     ]
