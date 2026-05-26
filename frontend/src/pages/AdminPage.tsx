@@ -193,7 +193,7 @@ const AdminPage = () => {
                             </div>
 
                             {/* on non mobile view we switch a table instead */}
-                            <div className="hidden: sm:block border border-border overflow-hidden">
+                            <div className="hidden sm:block border border-border overflow-hidden">
                                 <table className="w-full text-sm">
                                     <thead className="bg-surface border-b border-border">
                                         <tr>
@@ -222,6 +222,7 @@ const AdminPage = () => {
                                                             <span className="font-medium font-sans text-primary">{user.username}</span>
                                                             {isSelf && <span className="badge">you</span>}
                                                         </div>
+                                                    </td>
                                                         <td className="px-4 py-3 meta-text">{user.email}</td>
                                                         <td className="px-4 py-3">
                                                             {isSelf ? (
@@ -249,7 +250,6 @@ const AdminPage = () => {
                                                                 </button>
                                                             )}
                                                         </td>
-                                                    </td>
                                                 </tr>
                                             )
                                         })}
