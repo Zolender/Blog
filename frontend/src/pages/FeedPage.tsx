@@ -4,10 +4,10 @@ import { RefreshCcw } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { PaginationMeta, Post } from '../types'
 import { postsApi } from '../api/posts'
-import PostCard from '../components/PostCard'
 import SkeletonCard from '../components/SkeletonCard'
 import PullQuote from '../components/PullQuote'
 import { getAvatarColor, formatDate } from '../utils/formatting'
+import PostCard from '../components/APostCard'
 
 const pageVariants = {
   hidden:  { opacity: 0, y: 10 },

@@ -10,7 +10,7 @@ interface Props{
 
 
 
-const PostCard = ({post}: Props) => {
+const APostCard = ({post}: Props) => {
 
     const initial = post.author_username.charAt(0).toUpperCase()
     const avatarColor = getAvatarColor(post.author_username)
@@ -71,4 +71,4 @@ const PostCard = ({post}: Props) => {
     );
 }
  
-export default PostCard;
+export default APostCard;
