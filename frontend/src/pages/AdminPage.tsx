@@ -191,6 +191,71 @@ const AdminPage = () => {
                                     ) 
                                 })}
                             </div>
+
+                            {/* on non mobile view we switch a table instead */}
+                            <div className="hidden: sm:block border border-border overflow-hidden">
+                                <table className="w-full text-sm">
+                                    <thead className="bg-surface border-b border-border">
+                                        <tr>
+                                            <th className="text-left px-4 py-3 meta-text font-medium uppercase tracking-wide text-xs!">User</th>
+                                            <th className="text-left px-4 py-3 meta-text font-medium uppercase tracking-wide text-xs!">Email</th>
+                                            <th className="text-left px-4 py-3 meta-text font-medium uppercase tracking-wide text-xs!">Role</th>
+                                            <th className="text-left px-4 py-3 meta-text font-medium uppercase tracking-wide text-xs!">Joined</th>
+                                            <th className="text-left px-4 py-3 meta-text font-medium uppercase tracking-wide text-xs!">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border">
+                                        {users.map(user=>{
+                                            const isSelf = user.id === currentUser?.id
+                                            return (
+                                                <tr 
+                                                    key={user.id}
+                                                    className={`transition-colors ${isSelf? "bg-surface": "bg-white hover:bg-base"}`}
+                                                >
+                                                    <td className="px-4 py-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className={`avatar ${getAvatarColor(user.username)}`}>
+                                                                <span className="avatar-initial">
+                                                                    {user.username.charAt(0).toUpperCase()}
+                                                                </span>
+                                                            </div>
+                                                            <span className="font-medium font-sans text-primary">{user.username}</span>
+                                                            {isSelf && <span className="badge">you</span>}
+                                                        </div>
+                                                        <td className="px-4 py-3 meta-text">{user.email}</td>
+                                                        <td className="px-4 py-3">
+                                                            {isSelf ? (
+                                                                <span className="badge-admin">{user.role}</span>
+                                                            ): (
+                                                                <select 
+                                                                    value={user.role}
+                                                                    disabled={updatingRoleId===user.id}
+                                                                    onChange={(e)=> handleRoleChange(user, e.target.value as "user" | "admin")}
+                                                                    className="input-field w-auto! py-1! px-2! text-xs! disabled:opacity-50"
+                                                                >
+                                                                    <option value="user">user</option>
+                                                                    <option value="admin">admin</option>
+                                                                </select>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3 meta-text">{formatDate(user.created_at)}</td>
+
+                                                        <td className="px-4 py-3">
+                                                            {isSelf?(
+                                                                <span className="meta-text">-</span>
+                                                            ):(
+                                                                <button type="button" onClick={()=> openDeleteConfirm(user)} disabled={deletingId === user.id} className="btn-danger disabled:opacity-50">
+                                                                    {deletingId === user.id ? "Deleting...": "Delete"}
+                                                                </button>
+                                                            )}
+                                                        </td>
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
                         </>
                     )}
                 </motion.div>
