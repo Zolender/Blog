@@ -287,7 +287,7 @@ const PostPage = () => {
                                 {commentError && (
                                     <p role="alert" className="text-danger">{commentError}</p>
                                 )}
-                                <button type="submit" disabled={commentLoading || !commentContent.trim()} className="btn-primary self-end py-1.5! px4! text-xs!">
+                                <button type="submit" disabled={commentLoading || !commentContent.trim()} className="btn-primary self-end py-1.5! px-4! text-xs!">
                                     {commentLoading? "Posting": "Post comment"}
                                 </button>
                             </form>
@@ -305,7 +305,7 @@ const PostPage = () => {
                                     <div key={comment.id} className="flex flex-col gap-4">
                                         <CommentItem
                                             comment={comment}
-                                            canModify={!!canModifyComment}
+                                            canModify={!!canModifyComment(comment)}
                                             onDelete={()=> handleDeleteComment(comment.id)}
                                             onReply={()=> {
                                                 setReplyingTo(replyingTo === comment.id? null : comment.id)
@@ -344,7 +344,7 @@ const PostPage = () => {
                                         )}
 
                                         {getReplies(comment.id).map(reply=>(
-                                            <div className="ml-10 border-l-2 border-border pl-4">
+                                            <div key={reply.id} className="ml-10 border-l-2 border-border pl-4">
                                                 <CommentItem
                                                     comment={reply}
                                                     canModify={!!canModifyComment(reply)}

@@ -4,11 +4,14 @@ import './index.css'
 import { Provider } from 'react-redux'
 import { store } from './app/store'
 import App from './App'
+import { ToastProvider } from './components/Toast'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
-      <App/>
+      <ToastProvider>
+        <App/>
+      </ToastProvider>
     </Provider>
-  </StrictMode>,
+  </StrictMode>
 )

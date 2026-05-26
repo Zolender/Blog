@@ -125,7 +125,7 @@ const AdminPage = () => {
 
                     <div className="flex items-center justify-between">
                         <h1 className="heading-section">Admin Dashboard</h1>
-                        <span className="meta-text">{users.length}</span>
+                        <span className="meta-text">{users.length} users total</span>
                     </div>
                     <hr className="divider" />
 
@@ -164,7 +164,7 @@ const AdminPage = () => {
                                             <div className="flex items-center justify-between flex-wrap gap-2">
                                                 <span className="meta-text">Joined {formatDate(user.created_at)}</span>
                                             {/* role selecting */}
-                                            {isSelf && (
+                                            {!isSelf && (
                                                 <select 
                                                     value={user.role}
                                                     disabled= {updatingRoleId === user.id}
