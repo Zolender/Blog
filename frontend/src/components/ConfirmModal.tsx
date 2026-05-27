@@ -66,14 +66,14 @@ const ConfirmModal = ({
                                 <button
                                     type="button"
                                     onClick={onCancel}
-                                    className="btn-ghost !px-4 !py-1.5 !text-xs"
+                                    className="btn-ghost px-4! py-1.5! text-xs!"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="button"
                                     onClick={onConfirm}
-                                    className="btn-danger-solid !px-4 !py-1.5 !text-xs"
+                                    className="btn-danger-solid px-4! py-1.5! text-xs!"
                                 >
                                     {confirmLabel}
                                 </button>

@@ -426,3 +426,26 @@ body {
 
   & del { text-decoration: line-through; }
 }
+
+
+@utility btn-danger-solid {
+  background-color: var(--color-danger);
+  color: white;
+  font-family: var(--font-family-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.5rem 1.5rem;
+  transition: background-color 0.2s;
+  cursor: pointer;
+  display: inline-block;
+  text-align: center;
+
+  &:hover {
+    background-color: var(--color-danger-hover);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
