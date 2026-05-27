@@ -4,10 +4,10 @@ import { RefreshCcw } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { PaginationMeta, Post } from '../types'
 import { postsApi } from '../api/posts'
+import APostCard from '../components/APostCard'
 import SkeletonCard from '../components/SkeletonCard'
 import PullQuote from '../components/PullQuote'
-import { getAvatarColor, formatDate } from '../utils/formatting'
-import PostCard from '../components/APostCard'
+import { getAvatarColor, formatDate, stripMarkdown } from '../utils/formatting'
 
 const pageVariants = {
   hidden:  { opacity: 0, y: 10 },
@@ -15,11 +15,11 @@ const pageVariants = {
 }
 
 const FeedPage = () => {
-  const [posts, setPosts]= useState<Post[]>([])
+  const [posts, setPosts]           = useState<Post[]>([])
   const [pagination, setPagination] = useState<PaginationMeta | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError]= useState<string | null>(null)
+  const [isLoading, setIsLoading]   = useState(true)
+  const [error, setError]           = useState<string | null>(null)
 
   const fetchPosts = async (page: number) => {
     setIsLoading(true)
@@ -36,6 +36,11 @@ const FeedPage = () => {
   }
 
   useEffect(() => { fetchPosts(currentPage) }, [currentPage])
+
+  useEffect(() => {
+    document.title = 'Z-Tales — A sanctuary for the literate mind'
+    return () => { document.title = 'Z-Tales' }
+  }, [])
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
@@ -77,6 +82,7 @@ const FeedPage = () => {
   }
 
   const [hero, ...rest] = posts
+  const heroExcerpt = stripMarkdown(hero.content).slice(0, 200)
 
   return (
     <motion.div variants={pageVariants} initial="hidden" animate="visible">
@@ -105,7 +111,7 @@ const FeedPage = () => {
               {hero.title}
             </h1>
             <p className="font-sans text-sm text-muted leading-relaxed line-clamp-2 mb-5">
-              {hero.content.slice(0, 200)}{hero.content.length > 200 ? '...' : ''}
+              {heroExcerpt}{hero.content.length > 200 ? '...' : ''}
             </p>
             <div className="flex items-center gap-2">
               <div className={`avatar ${getAvatarColor(hero.author_username)}`}>
@@ -126,7 +132,7 @@ const FeedPage = () => {
           <>
             <p className="meta-text uppercase tracking-widest mb-6">Curated Feed</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {rest.map((post) => <PostCard key={post.id} post={post} />)}
+              {rest.map((post) => <APostCard key={post.id} post={post} />)}
             </div>
           </>
         )}

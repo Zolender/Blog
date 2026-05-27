@@ -18,3 +18,18 @@ export const formatDate = (
   dateString: string,
   options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' }
 ): string => new Date(dateString).toLocaleDateString('en-US', options)
+
+export const stripMarkdown = (content: string): string =>
+  content
+    .replace(/#{1,6}\s+/g, '')
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/~~(.*?)~~/g, '$1')
+    .replace(/`{1,3}[^`\n]*`{1,3}/g, '')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+    .replace(/^>\s+/gm, '')
+    .replace(/^[-*]\s+/gm, '')
+    .replace(/^-{3,}$/gm, '')
+    .replace(/\n+/g, ' ')
+    .trim()
