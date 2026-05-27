@@ -21,7 +21,6 @@ const ConfirmModal = ({
         <AnimatePresence>
             {isOpen && (
                 <>
-                    {/* Overlay div to cancel the modal action  */}
                     <motion.div
                         key="overlay"
                         initial={{ opacity: 0 }}
@@ -29,11 +28,9 @@ const ConfirmModal = ({
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.2 }}
                         className="fixed inset-0 z-40 bg-black/30"
-                        onClick={onCancel}
                         aria-hidden="true"
                     />
 
-                    {/* Modal itself */}
                     <motion.div
                         key="modal"
                         role="dialog"
@@ -44,10 +41,12 @@ const ConfirmModal = ({
                         exit={{ opacity: 0, y: 16 }}
                         transition={{ duration: 0.22, ease: "easeOut" }}
                         className="fixed inset-0 z-50 flex items-center justify-center px-5"
-                        onClick={e => e.stopPropagation()}
+                        onClick={onCancel}
                     >
-                        <div className="bg-white border border-border w-full max-w-xs p-6 flex flex-col gap-5">
-
+                        <div
+                            className="bg-white border border-border w-full max-w-xs p-6 flex flex-col gap-5"
+                            onClick={e => e.stopPropagation()}
+                        >
                             <div className="flex flex-col gap-1.5">
                                 <p
                                     id="modal-title"
