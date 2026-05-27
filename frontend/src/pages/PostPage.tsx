@@ -11,6 +11,7 @@ import ConfirmModal from "../components/ConfirmModal";
 import { motion } from "framer-motion";
 import { formatDate, getAvatarColor, getReadTime } from "../utils/formatting";
 import { Edit2, Heart, MessageCircle, Trash2 } from "lucide-react";
+import SkeletonPost from "../components/SkeletonPost";
 
 
 const PostPage = () => {
@@ -161,13 +162,7 @@ const PostPage = () => {
     const topLevelComments = comments.filter((c)=> c.parent_id === null)
     const getReplies = (commentId: number)=> comments.filter((c)=> c.parent_id === commentId)
 
-    if(isLoading){
-        return (
-            <div className="state-container">
-                <p className="meta-text">Loading Post...</p>
-            </div>
-        )
-    }
+    if (isLoading) return <SkeletonPost />
 
     if(error || !post){
         return (

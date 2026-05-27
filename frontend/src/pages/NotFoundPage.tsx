@@ -24,7 +24,7 @@ const NotFoundPage = () => {
             <p className="meta-text mb-8">
                 The tale you're looking for may have been moved or deleted.
             </p>
-            <Link to="/" className="btn-primary">
+            <Link to="/" replace className="btn-primary">
                 Back to the feed
             </Link>
         </motion.div>
