@@ -3,7 +3,7 @@ const AVATAR_COLORS = [
   'bg-rose-600',  'bg-sky-600',   'bg-emerald-700',
 ]
 
-export const getAvatarColor = (name: string): string => {
+export const getAvatarColor = (name: string = ''): string => {
   let hash = 0
   for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i)
   return AVATAR_COLORS[hash % AVATAR_COLORS.length]
