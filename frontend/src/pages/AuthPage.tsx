@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router";
 import { useAppDispatch } from "../app/hooks";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { authApi } from "../api/auth";
 import { setCredentials } from "../features/auth/authSlice";
 import { AnimatePresence, motion } from "framer-motion";
@@ -36,15 +36,21 @@ const AuthPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+      document.title = 'Sign in — Z-Tales'
+      return () => { document.title = 'Z-Tales' }
+  }, [])
+
   const setField = (key: keyof typeof fields) =>
     (e: React.ChangeEvent<HTMLInputElement>) =>
       setFields((prev) => ({ ...prev, [key]: e.target.value }));
 
   const switchTab = (next: Tab) => {
-    setTab(next);
-    setError(null);
-    setFields({ username: "", email: "", password: "" });
-  };
+    setTab(next)
+    setError(null)
+    setFields({ username: '', email: '', password: '' })
+    document.title = `${next === 'login' ? 'Sign in' : 'Register'} — Z-Tales`
+}
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
