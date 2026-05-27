@@ -147,7 +147,7 @@ Mobile-first. Write base styles for mobile, then override with `sm:` and `lg:`.
 - Desktop: `max-w-md mx-auto` centered card
 
 **Create / Edit post**
-- Mobile: full width, sticky top bar with Publish button, word count hidden (shown at bottom)
+- Mobile: full width, sticky top bar with Publish button, word count at bottom
 - Desktop: `reading-column` centered, word count in top bar
 
 ---
@@ -172,26 +172,25 @@ const panelVariants = {
 }
 ```
 
-Panel is positioned `fixed top-20 right-4 w-64`. Contains nav links (Feed always enabled,
-Write disabled/muted when not logged in), auth section at bottom.
+Panel is positioned `fixed top-20 right-4 w-64`. Contains nav links, auth section at bottom.
 Wrap with `<AnimatePresence>` for exit animation.
 
 ### Hero Featured Post
-First post from the feed, rendered prominently. Not a special DB field.
+First post from the feed rendered prominently.
 
 - Full-width image `w-full h-72 object-cover` (letter fallback if no image)
 - Meta line: `Featured · date` in `meta-text uppercase`
 - Title: `heading-hero`
-- Excerpt: 2 lines, `line-clamp-2`
+- Excerpt: plain text via `stripMarkdown()`, `line-clamp-2`
 - Author row: `avatar` + name
-- Uses the `card` utility with `group` for hover title color change
+- Uses `card` utility with `group` for hover title color change
 
 ### PostCard
 - `card` utility — white, bordered, subtle hover shadow
 - Image always on top `w-full h-48 object-cover` (letter fallback if no image)
 - Meta: `READ TIME · DATE` in `meta-text uppercase`
 - Title: `heading-card line-clamp-2`
-- Excerpt: `line-clamp-2`
+- Excerpt: plain text via `stripMarkdown()`, `line-clamp-2`
 - Author row: `avatar` + name (left) — like + comment counts (right)
 - Wrapped in `motion.div whileHover={{ y: -2 }}`
 
@@ -204,16 +203,18 @@ Two sizes defined as utilities:
 | `avatar-md` | `2.5rem` (40px) | Single post author header |
 
 Color is generated deterministically from the username string.
-Helper: `getAvatarColor(name)` in `src/utils/formatting.tsx`.
+Helper: `getAvatarColor(name: string = '')` in `src/utils/formatting.tsx`.
+Has a default value of `''` to prevent crashes on undefined usernames.
 Initial text: `avatar-initial` utility.
 
 ### Buttons
 
 | Utility | Description |
 |---|---|
-| `btn-primary` | Accent bg, white text, uppercase, tracking |
+| `btn-primary` | Accent bg, white text, uppercase, tracking — brand CTA |
 | `btn-ghost` | Border only, hover surface bg |
-| `btn-danger` | Danger color text, no border |
+| `btn-danger` | Danger color text, no bg — inline destructive links |
+| `btn-danger-solid` | Danger bg, white text — used in ConfirmModal confirm button |
 
 ### Input Fields
 
@@ -223,9 +224,7 @@ Initial text: `avatar-initial` utility.
 | `write-title` | Transparent, serif, large — for post title in write mode |
 | `write-area` | Transparent, serif, for post body in write mode |
 
-**FloatingInput** — the `<FloatingInput>` component wraps `input-field` with an animated
-label that lifts to the top border on focus or when the field has a value.
-Used exclusively on the Auth page.
+**FloatingInput** — wraps `input-field` with an animated label that lifts on focus or when the field has a value. Used exclusively on the Auth page.
 
 ### WriterLayout
 Distraction-free layout used by `/posts/new` and `/posts/:id/edit`.
@@ -237,9 +236,10 @@ No Navbar. Replaced by a custom sticky top bar inside `PostForm`:
 - Full canvas feel — borderless title textarea, bordered writing area
 - Sticky top bar with back, mode toggle, submit
 - Banner image URL input with live preview strip
-- Markdown toolbar: Bold, Italic, Strikethrough, Heading, Blockquote, Bullet list, Inline code, Code block, Link, Divider, Image
+- Markdown toolbar: Bold, Italic, Strikethrough, Heading, Blockquote, Bullet list, Inline code, Code block, LinkIcon, Divider, Image
 - Preview mode renders content via `react-markdown` + `remark-gfm` inside `prose` utility
 - Word count — top bar on desktop, bottom of form on mobile
+- **Draft autosave** — saves `{title, content, banner_image}` to localStorage every 30s under key `draft_post` (or `draft_post_{id}` for edits). Restored on mount if present. Cleared on successful publish/save. User is shown a "Draft restored" toast on restore.
 
 ### ConfirmModal
 Reusable modal for all destructive actions. Replaces `window.confirm()` everywhere.
@@ -249,25 +249,42 @@ Reusable modal for all destructive actions. Replaces `window.confirm()` everywhe
   title="Delete post"
   message="This cannot be undone."
   confirmLabel="Delete"
+  isOpen={open}
   onConfirm={fn}
   onCancel={fn}
 />
 ```
 
-- Framer Motion scale + fade entrance (`scale: 0.95→1, opacity: 0→1`)
-- Semi-transparent overlay behind modal (`bg-black/40`)
-- Cancel: `btn-ghost`, Confirm: `btn-primary` styled with danger colors
-- Full-width buttons stacked on mobile, inline on `sm:`
-- Tap outside overlay to cancel
+**Design decisions:**
+- `max-w-xs` (320px) — small footprint, not intrusive
+- Always inline buttons (`justify-end`) — Cancel left, Confirm right. No stacked full-width buttons.
+- `btn-ghost` for Cancel, `btn-danger-solid` for Confirm
+- `p-6` inner padding with `<hr className="divider" />` separating text from actions
+- Title: `font-sans text-sm font-semibold` — a prompt, not a section heading
+- Entrance: `y: 16 → 0` slide-up, matches Toast entrance
+- Overlay: `bg-black/30` — lighter than typical, less oppressive
+- Click handling: `onClick={onCancel}` on the wrapper div, `e.stopPropagation()` on the card — overlay click correctly dismisses
 
 ### Toast
 Lightweight feedback system for post-action results.
 
-- Positioned `fixed bottom-6 right-6` on desktop, `bottom-4 left-4 right-4` centered on mobile
+- Positioned `fixed bottom-4 left-4 right-4` on mobile, `sm:bottom-6 sm:right-6 sm:left-auto sm:w-80` on desktop
 - Two variants: `success` (accent left border) and `error` (danger left border)
-- Auto-dismisses after 3 seconds
-- Framer Motion slide-up entrance, fade exit via `AnimatePresence`
-- Triggered via a `useToast` hook
+- Auto-dismisses after 3 seconds, manual dismiss via `X` button
+- Framer Motion `y: 16→0` slide-up entrance, fade exit via `AnimatePresence`
+- Triggered via `useToast()` hook from anywhere inside `<ToastProvider>`
+- `aria-live="polite"` on the container for screen readers
+
+```tsx
+const { showToast } = useToast()
+showToast("Post deleted")               // success
+showToast("Something went wrong", "error")
+```
+
+### ErrorBoundary
+Class component wrapping the main content area in `RootLayout`.
+Catches render-time errors and displays a friendly recovery UI instead of a blank screen.
+Does not wrap the Navbar — navigation always remains accessible.
 
 ### Pull Quote
 ```css
@@ -286,9 +303,9 @@ font-sans, small, white/60, mt-4
 - No card border — separated by spacing only
 - Layout: `avatar` left, content right (`flex gap-3`)
 - Author + timestamp in same row (`meta-text`)
-- Comment body: `body-text` at `text-sm`
+- Comment body: `body-text` at `text-sm`, `break-words`
 - Actions row: Reply (`nav-link` style), Delete (`btn-danger`)
-- Delete triggers `ConfirmModal`, not inline confirm
+- Delete triggers `ConfirmModal` — self-contained state inside `CommentItem`
 - Nested reply indentation: `ml-10 border-l-2 border-border pl-4`
 
 ### Prose (Markdown Renderer)
@@ -310,13 +327,12 @@ padding: 0.75rem 1rem;
 
 ## Shared Utilities — `src/utils/formatting.tsx`
 
-All helpers that are used across more than one component live here.
-
 | Export | Description |
 |---|---|
-| `getAvatarColor(name)` | Returns a Tailwind bg class deterministically from a string |
+| `getAvatarColor(name: string = '')` | Returns a Tailwind bg class deterministically from a string. Defaults to `''` to prevent crashes on undefined. |
 | `getReadTime(content)` | Returns `"N min read"` based on word count at 200 wpm |
 | `formatDate(dateString, options?)` | Returns a localised date string, defaults to `MMM D, YYYY` |
+| `stripMarkdown(content)` | Strips markdown syntax from a string — used for plain-text excerpts in Feed hero and PostCard |
 
 ---
 
@@ -331,7 +347,7 @@ Keep it purposeful. Every animation must serve a reason.
 | Mobile nav panel | `x: 100%→0` slide from right |
 | PostCard hover | `whileHover={{ y: -2 }}` |
 | Like button tap | `whileTap={{ scale: 0.85 }}, spring` |
-| ConfirmModal entrance | `scale: 0.95→1, opacity: 0→1, duration: 0.2` |
+| ConfirmModal entrance | `y: 16→0, opacity: 0→1, duration: 0.22` |
 | Toast entrance | `y: 16→0, opacity: 0→1` slide up |
 | Toast exit | `opacity: 1→0, duration: 0.2` |
 
@@ -345,16 +361,14 @@ Every data-fetching component handles four states:
 
 | State | Treatment |
 |---|---|
-| **Loading** | 6 `SkeletonCard` components in the grid |
+| **Loading** | Skeleton cards (Feed) or `meta-text` loading message (Post, Admin) |
 | **Error** | `state-container` with message + retry button |
 | **Empty** | `state-container` with serif message + CTA |
 | **Success** | Normal rendered state |
 
-Destructive actions (delete post, delete comment, delete user) always go through
-`ConfirmModal`. Never `window.confirm()` or `window.alert()`.
-
-Post-action feedback uses the `Toast` system. Silent rollback for optimistic UI failures
-(e.g. like toggle) — no toast needed since the UI reverts automatically.
+Destructive actions always go through `ConfirmModal`. Never `window.confirm()`.
+Post-action feedback uses the `Toast` system.
+Silent rollback for optimistic UI failures (like toggle) — no toast needed.
 
 ---
 
@@ -364,6 +378,8 @@ Post-action feedback uses the `Toast` system. Silent rollback for optimistic UI 
 - Every icon-only button must have `aria-label`
 - Every form input must have a `<label>` via `htmlFor` / `id`
 - Error banners use `role="alert"` and `aria-live="polite"`
+- ConfirmModal uses `role="dialog"`, `aria-modal="true"`, `aria-labelledby`
+- Toast container uses `aria-live="polite"`
 - Do not remove focus outlines
 
 ---
@@ -383,7 +399,7 @@ Post-action feedback uses the `Toast` system. Silent rollback for optimistic UI 
 Open Graph on Single Post:
 ```html
 <meta property="og:title" content="{post.title}" />
-<meta property="og:description" content="{first 160 chars of content}" />
+<meta property="og:description" content="{first 160 chars of stripped content}" />
 <meta property="og:image" content="{post.banner_image or fallback}" />
 <meta property="og:type" content="article" />
 ```
@@ -393,55 +409,52 @@ Open Graph on Single Post:
 ## Design Decisions & Why
 
 **Why serif for editorial content?**
-Serif fonts carry connotations of print, literature, and considered writing. Every major
-reading-first platform uses a serif for body text. It signals the content is worth reading slowly.
+Serif fonts carry connotations of print, literature, and considered writing. Every major reading-first platform uses a serif for body text. It signals the content is worth reading slowly.
 
 **Why dark teal?**
-Bright accents feel jarring on light editorial layouts. Dark teal is assertive without
-being loud — it fits the "sanctuary" tone.
+Bright accents feel jarring on light editorial layouts. Dark teal is assertive without being loud — it fits the "sanctuary" tone.
 
 **Why 672px reading width?**
-The typographic sweet spot for comfortable reading at 16px — approximately 65–75
-characters per line. Medium uses 680px. Wider causes eye fatigue, narrower feels cramped.
+The typographic sweet spot for comfortable reading at 16px — approximately 65–75 characters per line. Medium uses 680px. Wider causes eye fatigue, narrower feels cramped.
 
 **Why mobile-first?**
-Most blog readers are on their phones. Mobile-first produces cleaner CSS and forces
-you to think about what is truly essential before adding complexity.
+Most blog readers are on their phones. Mobile-first produces cleaner CSS and forces you to think about what is truly essential before adding complexity.
 
 **Why skeleton screens instead of spinners?**
-Skeletons preserve layout and reduce perceived load time. Spinners communicate nothing
-about what is coming or how much space it will occupy.
+Skeletons preserve layout and reduce perceived load time. Spinners communicate nothing about what is coming or how much space it will occupy.
 
 **Why image always on top in PostCard?**
-Consistent card shape at all screen sizes. The card looks the same on a phone as it does
-on a desktop — only the grid column count changes.
+Consistent card shape at all screen sizes. The card looks the same on a phone as it does on a desktop — only the grid column count changes.
 
 **Why a floating panel from the right for mobile nav?**
-A small floating panel with a gap on the left feels intentional rather than a takeover.
-The gap signals the user can tap the overlay to dismiss it.
+A small floating panel with a gap on the left feels intentional rather than a takeover. The gap signals the user can tap the overlay to dismiss it.
 
 **Why border-driven layout instead of shadows?**
-Heavy shadows create elevation suited to dashboards. For editorial reading, flat borders
-keep focus on the content, not the UI chrome.
+Heavy shadows create elevation suited to dashboards. For editorial reading, flat borders keep focus on the content, not the UI chrome.
 
 **Why ConfirmModal instead of `window.confirm()`?**
-Browser native dialogs are unstyled, block the thread, and cannot be tested. A modal
-stays in the design system, works correctly on mobile with large tap targets, and gives
-us full control over copy and styling.
+Browser native dialogs are unstyled, block the thread, and cannot be tested. A modal stays in the design system, works correctly on mobile with large tap targets, and gives us full control over copy and styling.
+
+**Why `max-w-xs` for the ConfirmModal?**
+A confirmation prompt is not a form. It needs just enough space for a clear question and two buttons. Anything wider feels like the app is making a big deal of a small action. Small = decisive.
+
+**Why always-inline buttons in ConfirmModal?**
+Stacked full-width buttons on mobile look like a form submit flow. Two compact inline buttons — Cancel left, Confirm right — is the universal confirmation pattern across every major platform. Users know it instantly.
+
+**Why `btn-danger-solid` instead of overriding `btn-primary`?**
+`btn-primary` has uppercase + letter-spacing baked in as brand identity. Overriding it with `bg-danger!` is a hack. A destructive confirm button should have its own semantic utility — filled red, no uppercase, same sizing. Clean and intentional.
 
 **Why Toast for post-action feedback?**
-Toasts are feedback after an action, not before. They confirm something happened without
-blocking the user. Auto-dismiss keeps the UI clean.
+Toasts are feedback after an action, not before. They confirm something happened without blocking the user. Auto-dismiss keeps the UI clean.
 
-**Why inline confirm is wrong on mobile?**
-Inline confirm buttons rendered next to each other in a tight row cause mis-taps on
-small screens, especially for destructive actions. The modal gives proper tap target size.
+**Why draft autosave?**
+If a user writes 500 words and accidentally closes the tab, it's gone. That happens once and they never come back. localStorage autosave is free, requires no backend, and is the difference between a writing tool people trust and one they don't.
+
+**Why an Error Boundary?**
+One component crash currently produces a blank white screen with no explanation or recovery path. An error boundary catches the crash, renders a friendly fallback, and keeps the Navbar accessible so the user can navigate away. It's the difference between "the app broke" and "something went wrong on this page."
 
 **Why `@utility` in Tailwind v4?**
-Defining reusable patterns as utilities keeps components clean — a single class name
-instead of 8 inline ones. When a style needs to change, it changes in one place.
+Defining reusable patterns as utilities keeps components clean — a single class name instead of 8 inline ones. When a style needs to change, it changes in one place.
 
 **Why markdown for post content?**
-Markdown gives writers formatting power without a complex rich text editor. It's portable,
-plain text under the hood, renders predictably, and keeps our bundle small. `react-markdown`
-+ `remark-gfm` covers everything a blog writer needs.
+Markdown gives writers formatting power without a complex rich text editor. It's portable, plain text under the hood, renders predictably, and keeps our bundle small.

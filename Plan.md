@@ -71,6 +71,8 @@ Before writing a single query, we must define how our data lives together.
 - [x] POST `/auth/register` - Create new account (default role: "user")
 - [x] POST `/auth/login` - Authenticate and return JWT (include role in payload)
 - [x] GET `/auth/me` - Return current user from token (Protected)
+- [ ] POST `/auth/forgot-password` - Send reset token via email
+- [ ] POST `/auth/reset-password` - Validate token and update password
 
 ### Post Routes
 - [x] GET `/posts` - Fetch all posts (paginated)
@@ -82,7 +84,11 @@ Before writing a single query, we must define how our data lives together.
 ### Engagement Routes
 - [x] POST `/posts/:id/comments` - Add comment or reply (Authenticated users)
 - [x] DELETE `/posts/:id/comments/:commentId` - Delete comment (Author or Admin)
+- [ ] PUT `/posts/:id/comments/:commentId` - Edit comment (Author only)
 - [x] POST `/posts/:id/like` - Toggle like status (Authenticated users)
+
+### User Routes
+- [ ] GET `/users/:username` - Fetch public profile + posts by author
 
 ### Admin Routes
 - [x] GET `/admin/users` - Fetch all users (Admin only)
@@ -96,7 +102,7 @@ Before writing a single query, we must define how our data lives together.
 ### Roles
 - **User**
   - Create, edit, and delete own posts
-  - Add and delete own comments and replies
+  - Add, edit, and delete own comments and replies
   - Like and unlike posts
 
 - **Admin**
@@ -193,14 +199,40 @@ Before writing a single query, we must define how our data lives together.
 - [x] Install `react-markdown` + `remark-gfm` — markdown rendering in preview and post body
 - [x] Build `WriterLayout` — distraction-free layout for write/edit routes
 - [x] Add `prose` utility to `index.css` for markdown rendering
-- [ ] Build `ConfirmModal` component — reusable modal for destructive actions
-- [ ] Build `Toast` system — lightweight success/error feedback
-- [ ] Apply design system to Single Post page (reading layout, markdown body, comments)
-- [ ] Apply design system to Admin page
+- [x] Build `ConfirmModal` component — reusable, mobile-friendly, overlay-dismissible
+- [x] Build `Toast` system — `useToast` hook, `ToastProvider`, slide-up animation
+- [x] Apply design system to Single Post page — reading layout, markdown body, threaded comments
+- [x] Apply design system to Admin page — mobile cards + desktop table, RBAC-safe
+- [x] Fix comment crash — `addComment` controller now returns full JOIN'd comment shape
+- [x] Add `btn-danger-solid` utility to `index.css`
 - [ ] Build 404 page
-- [ ] Add page titles per route (`document.title`)
+- [ ] Add `document.title` to all remaining routes (Feed, Auth, Write, Edit)
 - [ ] Add Open Graph tags to Single Post page
-- [ ] Mobile responsive — inline with every page implementation
+- [ ] Add `stripMarkdown` helper — clean excerpts in Feed hero and PostCard
+- [ ] Fix `liked` state — backend returns `is_liked` per authenticated user
+- [ ] Add React Error Boundary — prevent full-page crashes
+- [ ] Draft autosave — localStorage, cleared on successful publish
+- [ ] Mobile responsive audit — pass through all pages on 375px
+
+### Phase 8: Session 1 — "Feels Finished" (current focus)
+Goals: remove every trust-breaker. A stranger can use the app without hitting anything broken or missing.
+
+- [ ] `liked` / `is_liked` — GET `/posts/:id` returns whether current user liked the post
+- [ ] `stripMarkdown` helper — excerpts in Feed + PostCard show clean plain text
+- [ ] `document.title` on all routes
+- [ ] React Error Boundary
+- [ ] 404 page
+- [ ] Draft autosave (localStorage, PostForm)
+- [ ] Password reset flow (forgot + reset, email via Resend or Nodemailer)
+
+### Phase 9: Session 2 — "Has Depth" (next week)
+Goals: give users reasons to stay and come back.
+
+- [ ] Profile pages — `GET /users/:username`, public author page with bio + posts
+- [ ] Search — title + content `ILIKE` query, search input in Navbar or Feed
+- [ ] Edit comment — PUT endpoint + inline edit UI in CommentItem
+- [ ] Tags / categories — fixed tag set, filter feed by tag
+- [ ] Admin post management — list and delete any post from Admin Dashboard
 
 ---
 
@@ -248,14 +280,14 @@ frontend/
 ├── src/
 │   ├── api/            ← HTTP call modules
 │   ├── app/            ← Redux store and typed hooks
-│   ├── components/     ← Reusable UI (Navbar, PostCard, SkeletonCard, ConfirmModal, Toast...)
+│   ├── components/     ← Reusable UI (Navbar, PostCard, SkeletonCard, ConfirmModal, Toast, ErrorBoundary...)
 │   ├── features/       ← Redux slices (auth)
 │   ├── layouts/        ← RootLayout, WriterLayout
 │   ├── pages/          ← Page-level components
 │   ├── types/          ← Shared TypeScript interfaces
-│   ├── utils/          ← Shared helpers (formatting, avatar colors)
+│   ├── utils/          ← Shared helpers (formatting, avatar colors, stripMarkdown)
 │   ├── App.tsx         ← Router definition
-│   └── main.tsx        ← Entry point, Redux Provider
+│   └── main.tsx        ← Entry point, Redux Provider, ToastProvider
 ```
 
 ---
@@ -266,7 +298,7 @@ frontend/
 - Navbar: Menu, X, Rss, PenLine, Shield, LogIn, LogOut, UserPlus
 - Post page: Heart, MessageCircle, Edit2, Trash2
 - Feed page: RefreshCcw
-- Write page: ArrowLeft, Eye, Edit2, Bold, Italic, Heading2, Code, Code2, Quote, Minus, List, Link, Strikethrough, Image
+- Write page: ArrowLeft, Eye, Edit2, Bold, Italic, Heading2, Code, Code2, Quote, Minus, List, LinkIcon, Strikethrough, Image
 
 ### UX Considerations
 - Show/hide actions based on role and ownership
@@ -280,3 +312,5 @@ frontend/
 - Framer Motion page transitions and micro-interactions
 - Mobile-first responsive — implemented inline per page, not as a separate pass
 - Markdown support in post body — written with toolbar, rendered with `react-markdown` + `remark-gfm`
+- Draft autosave — localStorage, 30s interval, cleared on publish
+- Error boundaries — graceful fallback on component crashes
