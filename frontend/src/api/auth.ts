@@ -10,6 +10,11 @@ export const authApi = {
     login: (data: {email: string; password: string})=>{
         return apiClient.post<{token: string; user: User}>("/auth/login", data)
     },
-    getMe: ()=> apiClient.get<{user: User}>("/auth/me")
+    getMe: ()=> apiClient.get<{user: User}>("/auth/me"),
     
+    forgotPassword: (email: string) =>
+        apiClient.post<{ message: string }>("/auth/forgot-password", { email }),
+
+    resetPassword: (token: string, password: string) =>
+        apiClient.post<{ message: string }>("/auth/reset-password", { token, password })
 }
