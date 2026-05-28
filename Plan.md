@@ -210,19 +210,19 @@ Before writing a single query, we must define how our data lives together.
 - [x] Add Open Graph tags to Single Post page
 - [x] Add `stripMarkdown` helper — clean excerpts in Feed hero and PostCard
 - [x] Fix `liked` state — backend returns `is_liked` per authenticated user
-- [ ] Add React Error Boundary — prevent full-page crashes
-- [ ] Draft autosave — localStorage, cleared on successful publish
-- [ ] Mobile responsive audit — pass through all pages on 375px
+- [x] Add React Error Boundary — prevent full-page crashes
+- [x] Draft autosave — localStorage, cleared on successful publish
+- [x] Mobile responsive audit — pass through all pages on 375px
 
 ### Phase 8: Session 1 — "Feels Finished" (current focus)
 Goals: remove every trust-breaker. A stranger can use the app without hitting anything broken or missing.
 
-- [ ] `liked` / `is_liked` — GET `/posts/:id` returns whether current user liked the post
-- [ ] `stripMarkdown` helper — excerpts in Feed + PostCard show clean plain text
-- [ ] `document.title` on all routes
-- [ ] React Error Boundary
-- [ ] 404 page
-- [ ] Draft autosave (localStorage, PostForm)
+- [x] `liked` / `is_liked` — GET `/posts/:id` returns whether current user liked the post
+- [x] `stripMarkdown` helper — excerpts in Feed + PostCard show clean plain text
+- [x] `document.title` on all routes
+- [x] React Error Boundary
+- [x] 404 page
+- [x] Draft autosave (localStorage, PostForm)
 - [ ] Password reset flow (forgot + reset, email via Resend or Nodemailer)
 
 ### Phase 9: Session 2 — "Has Depth" (next week)
