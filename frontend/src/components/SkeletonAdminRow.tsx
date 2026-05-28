@@ -1,7 +1,7 @@
 const SkeletonAdminRow = () => {
     return (
         <>
-            {/* Mobile card skeleton — visible below sm */}
+            
             <div className="sm:hidden border border-border p-4 flex flex-col gap-3">
                 <div className="flex items-center gap-3">
                     <div className="w-7 h-7 rounded-full skeleton shrink-0" />
@@ -17,7 +17,6 @@ const SkeletonAdminRow = () => {
                 <div className="h-7 skeleton w-24" />
             </div>
 
-            {/* Table row skeleton — visible on sm+ */}
             <tr className="hidden sm:table-row bg-white">
                 <td className="px-4 py-3">
                     <div className="flex items-center gap-2">

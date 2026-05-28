@@ -6,6 +6,7 @@ import { useToast } from "../components/Toast";
 import ConfirmModal from "../components/ConfirmModal";
 import { motion } from "framer-motion";
 import { formatDate, getAvatarColor } from "../utils/formatting";
+import SkeletonAdminRow from "../components/SkeletonAdminRow";
 
 
 const AdminPage = () => {
@@ -85,13 +86,39 @@ const AdminPage = () => {
     }
 
 
-    if(isLoading){
-        return (
-            <div className="state-container">
-                <p className="meta-text">Loading users...</p>
-            </div>
-        )
-    }
+    if (isLoading) return (
+    <div className="page-wrapper py-10 flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+            <div className="h-7 skeleton w-48" />
+            <div className="h-3 skeleton w-20" />
+        </div>
+        <div className="border-t border-border" />
+
+        {/* Mobile skeletons */}
+        <div className="flex flex-col gap-3 sm:hidden">
+            {Array.from({ length: 5 }).map((_, i) => <SkeletonAdminRow key={i} />)}
+        </div>
+
+        {/* Desktop table skeleton */}
+        <div className="hidden sm:block border border-border overflow-hidden">
+            <table className="w-full text-sm">
+                <thead className="bg-surface border-b border-border">
+                    <tr>
+                        <th className="text-left px-4 py-3 meta-text font-medium uppercase tracking-wide text-xs!">User</th>
+                        <th className="text-left px-4 py-3 meta-text font-medium uppercase tracking-wide text-xs!">Email</th>
+                        <th className="text-left px-4 py-3 meta-text font-medium uppercase tracking-wide text-xs!">Role</th>
+                        <th className="text-left px-4 py-3 meta-text font-medium uppercase tracking-wide text-xs!">Joined</th>
+                        <th className="text-left px-4 py-3 meta-text font-medium uppercase tracking-wide text-xs!">Actions</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                    {Array.from({ length: 5 }).map((_, i) => <SkeletonAdminRow key={i} />)}
+                </tbody>
+            </table>
+        </div>
+    </div>
+)
+
 
     if(error){
         return (
