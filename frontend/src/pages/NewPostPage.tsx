@@ -39,6 +39,7 @@ const NewPostPage = () => {
             submitLabel="Publish"
             isLoading={isLoading}
             error={error}
+            draftKey="draft_new"
         />
     )
 }

@@ -81,6 +81,7 @@ const EditPostPage = () => {
             submitLabel="Save changes"
             isLoading={isLoading}
             error={error}
+            draftKey={`draft_edit_${id}`}
         />
     )
 }
