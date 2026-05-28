@@ -9,9 +9,10 @@ import remarkGfm from "remark-gfm";
 import { useToast } from "../components/Toast";
 import ConfirmModal from "../components/ConfirmModal";
 import { motion } from "framer-motion";
-import { formatDate, getAvatarColor, getReadTime } from "../utils/formatting";
+import { formatDate, getAvatarColor, getReadTime, stripMarkdown } from "../utils/formatting";
 import { Edit2, Heart, MessageCircle, Trash2 } from "lucide-react";
 import SkeletonPost from "../components/SkeletonPost";
+import { clearPostMeta, setPostMeta } from "../utils/meta";
 
 
 const PostPage = () => {
@@ -60,11 +61,25 @@ const PostPage = () => {
         fetchPost()
     },[id])
 
-    //the docs title
-    useEffect(()=>{
-        if(post)document.title = `${post.title}- Z-Tales`
-        return ()=> {
-            document.title = "Z-Tales"
+
+
+    useEffect(() => {
+        if (!post) return
+
+        const description = stripMarkdown(post.content).slice(0, 160)
+
+        document.title = `${post.title} — Z-Tales`
+
+        setPostMeta({
+            title: `${post.title} — Z-Tales`,
+            description,
+            image: post.banner_image ?? null,
+            url: window.location.href,
+        })
+
+        return () => {
+            document.title = 'Z-Tales'
+            clearPostMeta()
         }
     }, [post])
 

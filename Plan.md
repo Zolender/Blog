@@ -205,11 +205,11 @@ Before writing a single query, we must define how our data lives together.
 - [x] Apply design system to Admin page — mobile cards + desktop table, RBAC-safe
 - [x] Fix comment crash — `addComment` controller now returns full JOIN'd comment shape
 - [x] Add `btn-danger-solid` utility to `index.css`
-- [ ] Build 404 page
-- [ ] Add `document.title` to all remaining routes (Feed, Auth, Write, Edit)
-- [ ] Add Open Graph tags to Single Post page
-- [ ] Add `stripMarkdown` helper — clean excerpts in Feed hero and PostCard
-- [ ] Fix `liked` state — backend returns `is_liked` per authenticated user
+- [x] Build 404 page
+- [x] Add `document.title` to all remaining routes (Feed, Auth, Write, Edit)
+- [x] Add Open Graph tags to Single Post page
+- [x] Add `stripMarkdown` helper — clean excerpts in Feed hero and PostCard
+- [x] Fix `liked` state — backend returns `is_liked` per authenticated user
 - [ ] Add React Error Boundary — prevent full-page crashes
 - [ ] Draft autosave — localStorage, cleared on successful publish
 - [ ] Mobile responsive audit — pass through all pages on 375px
