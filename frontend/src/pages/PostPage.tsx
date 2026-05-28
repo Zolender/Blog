@@ -50,6 +50,7 @@ const PostPage = () => {
                 setPost(data.post)
                 setComments(data.comments)
                 setLikeCount(Number(data.post.like_count))
+                setLiked(data.post.is_liked)
             }catch(err){
                 setError(err instanceof Error ? err.message : "Failed to load post")
             }finally{

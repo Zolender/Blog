@@ -19,6 +19,7 @@ export interface Post{
     author_profile_pic: string | null
     like_count: string
     comment_count: string
+    is_liked: boolean
 }
 
 export interface Comment {
