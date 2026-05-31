@@ -979,3 +979,148 @@ the URL as `${VITE_API_URL}/api/posts`. The backend has no `/api` prefix on its 
 The fix was removing `/api` from the `VITE_API_URL` value and making `client.ts` use
 `VITE_API_URL` directly as the base, falling back to `/api` only in development where
 the Vite proxy handles the stripping.
+
+---
+
+## Phase 10 — Design Audit
+
+### Contrast ratios and WCAG AA
+Color contrast is the ratio between the luminance of the text and its background. WCAG AA — the international accessibility standard — requires a minimum of 4.5:1 for body text (under 18px). `#888888` on `#FAFAFA` gives 3.78:1. Every date, read time, and caption on the site was failing this threshold. Changing muted to `#666666` brings it to 4.65:1. Tools like `webaim.org/resources/contrastchecker` let you verify any pair before committing.
+
+### `:focus-visible` vs `:focus`
+`:focus` fires whenever an element receives focus — including mouse clicks. `:focus-visible` is smarter: browsers apply it only when they determine the user is navigating by keyboard (Tab, arrow keys). The result is keyboard users get a clear visible ring, mouse users see nothing extra. This is the correct modern pattern for all interactive elements. Every button and link in the design system now has `&:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }` in its utility definition.
+
+### `inline-flex` vs `inline-block` for buttons
+`display: inline-block` lays content out as normal flow — an icon next to text will not vertically center without manual line-height hacks. `display: inline-flex` with `align-items: center` centers any combination of content automatically. `btn-primary` was using `inline-block`. Changing it to `inline-flex` costs nothing and makes the button correct for all future icon use.
+
+### Distinguishing code from quoted text visually
+Both `<pre>` blocks and `<blockquote>` previously used `border-left: 3px solid accent`. Same structure, different semantic meaning — a reader could not distinguish code from a citation without reading the content itself. Giving code blocks a dark background (`#1c1c1c`) with light text immediately signals "this is technical content." This is the dominant convention across editorial and technical publishing (Medium, Substack, GitHub) and respects the reader's visual vocabulary.
+
+---
+
+## Phase 11 — Interaction Bugs
+
+### `useRef` as a request lock
+When an async operation is in flight, you often want to prevent the user from triggering it again before it finishes. The naive solution is a `useState` boolean, but state changes cause re-renders — you would see a flicker as the UI reacts to the lock being set and cleared. `useRef` holds a mutable value that persists across renders *without* causing a re-render when changed. That makes it ideal for a "lock" flag the UI never needs to know about:
+
+```ts
+const likingRef = useRef(false)
+
+const handleLike = async () => {
+    if (likingRef.current) return
+    likingRef.current = true
+    try {
+        await postsApi.toggleLike(id)
+    } finally {
+        likingRef.current = false
+    }
+}
+```
+
+### Frontend state must mirror backend side effects
+When a parent comment is deleted, the backend CASCADE-deletes all its replies automatically. But the frontend holds its own copy of the comment list in `useState`. After deletion, `filter(c => c.id !== commentId)` removed the parent but left the replies — children whose `parent_id` matched the deleted id. They were orphaned: still in local state, rendering under a comment that no longer existed.
+
+The fix mirrors the backend's intent in the filter:
+```ts
+prev.filter(c => c.id !== commentId && c.parent_id !== commentId)
+```
+One line, but the lesson is important: **when the backend has side effects, every one of them must be reflected in the frontend's state update** — not just the primary action.
+
+### `COALESCE` cannot express intent
+`COALESCE(value, fallback)` returns the first non-null value. Used for partial updates:
+```sql
+SET banner_image = COALESCE($3, banner_image)
+```
+It cannot distinguish between "the client didn't send this field" and "the client explicitly sent null to clear it." Both arrive as `null`, both result in keeping the old value. The fix is to build the `SET` clause dynamically — only include a field if it was present in the request body. The check `'banner_image' in parsed.data` returns `true` even when the value is `null`, because the key exists in the object. This is the correct pattern for nullable partial updates.
+
+### Coerce data types once, at the boundary
+PostgreSQL `COUNT()` returns a string — `"5"` not `5`. The `Post` type was reflecting this and every component that displayed counts was calling `Number(post.like_count)` manually. The fix is to coerce once in the API layer:
+
+```ts
+posts: data.posts.map(p => ({
+    ...p,
+    like_count: Number(p.like_count),
+    comment_count: Number(p.comment_count),
+}))
+```
+
+Then update the TypeScript type to `number`. All the `Number()` wrappers in components become dead code and can be deleted. This is the **single source of truth** principle applied to data transformation — one place transforms, everything downstream trusts the result.
+
+---
+
+## Phase 12 — Editor Polish
+
+### `Set<string>` for multi-active state
+A single `string | null` for the active toolbar button means only one button can be highlighted at a time. A `Set<string>` allows multiple buttons to be independently active — which matters for rapid successive clicks and for future context-awareness (detecting when the cursor is inside bold+italic markers simultaneously).
+
+The critical React rule: **never mutate state directly**. `prev.add(label)` mutates the existing Set in place — React sees the same reference and skips the re-render. You must produce a new Set:
+```ts
+setActiveButtons(prev => new Set([...prev, label]))
+```
+The same principle applies to arrays (`[...prev, item]` not `prev.push(item)`) and objects (`{ ...prev, key: value }` not `prev.key = value`).
+
+### `Map<string, timeoutId>` for per-item timers
+Each toolbar button needs its own independent timer. A `Map` stores one timer per label. When a button is clicked, its previous timer is cancelled before starting a new one — so clicking a button twice resets its own flash without affecting any other button's timer. `Map` has cleaner semantics for dynamic key-value management than a plain object: `has`, `get`, `set`, `delete` are explicit and safe.
+
+### `setSelectionRange(start, end)` — cursor vs selection
+`setSelectionRange(pos, pos)` places a cursor with nothing selected. `setSelectionRange(start, end)` with different values creates a text selection. After injecting `**bold text**`, selecting "bold text" means the user types immediately to replace it — no need to manually position the cursor. If the user had text selected before clicking Bold, their text gets wrapped and stays selected. Both cases are handled by the same logic because `selected` is either the user's selection or the default placeholder text.
+
+### Debouncing with `useEffect` cleanup
+A debounce delays an action until a pause in activity. React's `useEffect` + `setTimeout` + cleanup gives you this pattern natively:
+
+```ts
+useEffect(() => {
+    const timer = setTimeout(() => save(), 1500)
+    return () => clearTimeout(timer)
+}, [title, content])
+```
+
+Every time a dependency changes, React runs the cleanup (cancels the previous timer) then runs the effect again (starts a new timer). The save only fires if 1.5 seconds pass with no changes. This pattern is universal — you will use it for search inputs, resize handlers, form validation, and anywhere you need to wait for the user to stop doing something.
+
+### Evolving a component API without breaking callers
+Every existing call to `showToast("Post deleted")` passed only a message. Adding a Discard action to the draft-restored toast required extending the function. The rule: **add optional parameters**. Existing callers do not change. New callers get the new capability.
+
+```ts
+showToast(message: string, variant = "success", action?: { label: string; onClick: () => void })
+```
+
+The `?` makes `action` optional — `undefined` if not passed. This is the correct way to evolve any function or component interface in a shared codebase.
+
+### The auto-grow textarea reset trick
+Setting a textarea's height to `scrollHeight` makes it grow. But it will not shrink when text is deleted because `scrollHeight` is measured relative to the current element height — it reports the minimum height needed, but only downward from where it already is. The fix: reset to `auto` first, which collapses the element, then measure and apply:
+
+```ts
+el.style.height = 'auto'
+el.style.height = `${el.scrollHeight}px`
+```
+
+Order is essential. This is the standard pattern for dynamic textarea sizing.
+
+---
+
+## Phase 13 — Motion & App Loading
+
+### `<MotionConfig reducedMotion="user">` — global motion control
+Some users enable "Reduce Motion" in their OS accessibility settings (common for vestibular disorders and epilepsy sensitivity). Framer Motion's `<MotionConfig reducedMotion="user">` wraps the entire app and automatically disables or reduces all animations when this OS setting is on. One change in `App.tsx`, zero changes to any animation code anywhere else in the project. This is the correct, idiomatic Framer Motion approach.
+
+### Layout components as shared behaviour boundaries
+`WriterLayout` wraps both `/posts/new` and `/posts/:id/edit`. Putting the `motion.div` entrance animation in `WriterLayout` rather than in each individual page means both routes inherit it automatically. This is a general principle: **layout components are the right place for shared structural behaviour** — animation, scroll restoration, background colour, document structure — because every nested page inherits it without duplication.
+
+### Skeletons communicate structure, spinners communicate waiting
+A spinner tells the user "something is happening." A skeleton tells the user "here is the shape of what is coming." Skeletons reduce perceived load time because the user's brain starts parsing the layout before data arrives. When content loads, it replaces the skeleton in place — no layout jump. The App-level skeleton mirrors the exact shape of the feed (navbar bar, hero block, card grid) so the transition from loading to loaded feels like a reveal rather than a replacement.
+
+### Arming and disarming a delayed message with `useEffect`
+The Render cold-start warning should only appear when loading is genuinely slow (over 3 seconds). A `useEffect` that watches `isLoading` handles both sides:
+
+```ts
+useEffect(() => {
+    if (!isLoading) { setShowSlowMessage(false); return }
+    const timer = setTimeout(() => setShowSlowMessage(true), 3000)
+    return () => clearTimeout(timer)
+}, [isLoading])
+```
+
+If the server responds in 1 second, the cleanup fires and the message never appears. If it takes 25 seconds, the message appears at the 3-second mark. The `if (!isLoading)` branch also clears the message once data arrives — it does not just fade out, it is actively removed from state.
+
+### `min-h-dvh` vs `min-h-screen`
+`min-h-screen` maps to `min-height: 100vh`. On mobile browsers, `100vh` includes the browser chrome (address bar), making the actual visible area smaller than 100vh. This causes a subtle scrollbar on pages designed to fill exactly one screen. `min-h-dvh` maps to `min-height: 100dvh` — the *dynamic* viewport height, which adjusts correctly as the browser chrome shows and hides. Use `dvh` for any full-height container that will be seen on mobile.

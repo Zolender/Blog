@@ -57,7 +57,11 @@ const FeedPage = () => {
     return (
       <div className="page-wrapper py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+          showSlowMessage && (
+            <p className="text-center meta-text mt-8">
+                Waking up the server, this may take a moment...
+            </p>
+        )
         </div>
       </div>
     )

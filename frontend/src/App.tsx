@@ -37,7 +37,7 @@ const App = () => {
     )
 
     return (
-        <MotionConfig>
+        <MotionConfig reducedMotion="user">
             <BrowserRouter>
                 <Routes>
                     <Route path="login" element={<GuestRoute><AuthPage /></GuestRoute>} />

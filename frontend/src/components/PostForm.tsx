@@ -24,7 +24,9 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
     const navigate = useNavigate()
     const { showToast } = useToast()
     const [isPreview, setIsPreview] = useState(false)
+    const [activeButtons, setActiveButtons] = useState<Set<string>>(new Set())
     const textareaRef = useRef<HTMLTextAreaElement>(null)
+    const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
     // on mount we'd restore draft if one exists, otherwise fall back to initialValues
     const [title, setTitle] = useState(() => {
@@ -123,6 +125,21 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
             el.setSelectionRange(start + prefix.length, start + prefix.length)
         })
     }, [content])
+
+    const handleToolbarClick = (label: string, action: () => void) => {
+        action()
+        if (timersRef.current.has(label)) clearTimeout(timersRef.current.get(label))
+        setActiveButtons(prev => new Set([...prev, label]))
+        const timer = setTimeout(() => {
+            setActiveButtons(prev => {
+                const next = new Set(prev)
+                next.delete(label)
+                return next
+            })
+            timersRef.current.delete(label)
+        }, 500)
+        timersRef.current.set(label, timer)
+    }
 
     const toolbarItems = [
         { icon: <Bold size={14} />, label: "Bold", action: () => injectWrap("**", "**", "bold text") },
@@ -229,8 +246,12 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
                                     key={item.label}
                                     type="button"
                                     title={item.label}
-                                    onClick={item.action}
-                                    className="p-2 text-muted hover:text-primary hover:bg-surface transition-colors rounded-sm"
+                                    onClick={() => handleToolbarClick(item.label, item.action)}
+                                    className={`p-2 transition-colors rounded-sm ${
+                                        activeButtons.has(item.label)
+                                            ? 'text-primary bg-surface'
+                                            : 'text-muted hover:text-primary hover:bg-surface'
+                                    }`}
                                 >
                                     {item.icon}
                                 </button>
