@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import type { Post } from "../types"
 import { postsApi } from "../api/posts"
 import PostForm from "../components/PostForm"
+import SkeletonEditor from "../components/SkeletonEditor"
 
 const EditPostPage = () => {
     const navigate    = useNavigate()
@@ -59,11 +60,7 @@ const EditPostPage = () => {
         }
     }
 
-    if (isFetching) return (
-        <div className="state-container">
-            <p className="meta-text">Loading post...</p>
-        </div>
-    )
+    if (isFetching) return <SkeletonEditor />
 
     if (error || !post) return (
         <div className="state-container">
