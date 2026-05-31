@@ -29,7 +29,7 @@ export const getAllPosts = async (req: Request, res: Response, next: NextFunctio
                     users.username AS author_username,
                     users.profile_pic AS author_profile_pic,
                     COUNT(DISTINCT likes.user_id) AS like_count,
-                    COUNT(DISTINCT comments.id) AS comment_count
+                    COUNT(DISTINCT CASE comments.parent_id IS NULL THEN comments.id END) AS comment_count
                 FROM posts
                 JOIN users ON posts.author_id = users.id
                 LEFT JOIN likes ON posts.id = likes.post_id
@@ -176,15 +176,15 @@ export const updatePost = async (req: authRequest, res: Response, next: NextFunc
 
         const { title, content, banner_image } = parsed.data
 
-        const updated = await pool.query(`
-            UPDATE posts
-            SET
-                title        = COALESCE($1, title),
-                content      = COALESCE($2, content),
-                banner_image = COALESCE($3, banner_image)
-            WHERE id = $4
-            RETURNING *
-        `, [title ?? null, content ?? null, banner_image ?? null, id])
+        const fields: string[] = []
+        const values: unknown[] = []
+
+        if(title !== undefined) { fields.push(`title = $${values.length + 1}`); values.push(title)}
+        if(content !== undefined) { fields.push(`content = $${values.length + 1}`); values.push(content)}
+        if('banner_image' in parsed.data) { fields.push(`banner_image = $${values.length + 1}`); values.push(banner_image ?? null)}
+
+        values.push(id)    
+        const updated = await pool.query(`UPDATE posts SET ${fields.join(', ')} WHERE id = $${values.length} RETURNING *`, values)
 
         res.status(200).json({ message: "Post updated", post: updated.rows[0] })
     } catch (err) {

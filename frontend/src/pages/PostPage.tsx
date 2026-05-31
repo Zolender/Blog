@@ -277,7 +277,7 @@ const PostPage = () => {
 
                     <div className="flex items-center gap-2 text-muted">
                         <MessageCircle size={18} strokeWidth={1.5}/>
-                        <span className="text-sm font-sans">{topLevelComments.length}</span>
+                        <span className="text-sm font-sans">{comments.length}</span>
                     </div>
                 </div>
 
@@ -286,7 +286,7 @@ const PostPage = () => {
                     {/* comments */}
                 <div className="flex flex-col gap-6">
                         <h2 className="heading-section text-lg">
-                            Comments ({topLevelComments.length})
+                            Comments ({comments.length})
                         </h2>
                         {user? (
                             <form onSubmit={handleAddComment} className="flex flex-col gap-2">
