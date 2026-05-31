@@ -29,7 +29,7 @@ export const getAllPosts = async (req: Request, res: Response, next: NextFunctio
                     users.username AS author_username,
                     users.profile_pic AS author_profile_pic,
                     COUNT(DISTINCT likes.user_id) AS like_count,
-                    COUNT(DISTINCT CASE comments.parent_id IS NULL THEN comments.id END) AS comment_count
+                    COUNT(DISTINCT CASE WHEN comments.parent_id IS NULL THEN comments.id END) AS comment_count
                 FROM posts
                 JOIN users ON posts.author_id = users.id
                 LEFT JOIN likes ON posts.id = likes.post_id
