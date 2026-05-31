@@ -15,6 +15,7 @@ import AuthPage from "./pages/AuthPage"
 import WriterLayout from "./layouts/WriterLayout"
 import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 import ResetPasswordPage from "./pages/ResetPasswordPage"
+import { MotionConfig } from "framer-motion"
 
 const App = () => {
     const dispatch    = useAppDispatch()
@@ -29,26 +30,28 @@ const App = () => {
     )
 
     return (
-        <BrowserRouter>
-            <Routes>
-                <Route path="login" element={<GuestRoute><AuthPage /></GuestRoute>} />
-                <Route path="register" element={<GuestRoute><AuthPage /></GuestRoute>} />
-                <Route path="forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
-                <Route path="reset-password"  element={<ResetPasswordPage />} />
+        <MotionConfig>
+            <BrowserRouter>
+                <Routes>
+                    <Route path="login" element={<GuestRoute><AuthPage /></GuestRoute>} />
+                    <Route path="register" element={<GuestRoute><AuthPage /></GuestRoute>} />
+                    <Route path="forgot-password" element={<GuestRoute><ForgotPasswordPage /></GuestRoute>} />
+                    <Route path="reset-password"  element={<ResetPasswordPage />} />
 
-                <Route element={<WriterLayout />}>
-                    <Route path="posts/new" element={<ProtectedRoute><NewPostPage /></ProtectedRoute>} />
-                    <Route path="posts/:id/edit" element={<ProtectedRoute><EditPostPage /></ProtectedRoute>} />
-                </Route>
+                    <Route element={<WriterLayout />}>
+                        <Route path="posts/new" element={<ProtectedRoute><NewPostPage /></ProtectedRoute>} />
+                        <Route path="posts/:id/edit" element={<ProtectedRoute><EditPostPage /></ProtectedRoute>} />
+                    </Route>
 
-                <Route element={<RootLayout />}>
-                    <Route index element={<FeedPage />} />
-                    <Route path="posts/:id" element={<PostPage />} />
-                    <Route path="admin" element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
-                    <Route path="*" element={<NotFoundPage />} />
-                </Route>
-            </Routes>
-        </BrowserRouter>
+                    <Route element={<RootLayout />}>
+                        <Route index element={<FeedPage />} />
+                        <Route path="posts/:id" element={<PostPage />} />
+                        <Route path="admin" element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
+                        <Route path="*" element={<NotFoundPage />} />
+                    </Route>
+                </Routes>
+            </BrowserRouter>
+        </MotionConfig>
     )
 }
 
