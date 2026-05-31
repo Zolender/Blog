@@ -37,19 +37,19 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
     const timersRef      = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
     const isFirstRender  = useRef(true)
 
-    const [title, setTitle] = useState(() => {
+    const [title, setTitle] = useState<string>(() => {
         const saved = localStorage.getItem(draftKey)
         if (saved) { try { return JSON.parse(saved).title ?? initialValues?.title ?? "" } catch {} }
         return initialValues?.title ?? ""
     })
 
-    const [content, setContent] = useState(() => {
+    const [content, setContent] = useState<string>(() => {
         const saved = localStorage.getItem(draftKey)
         if (saved) { try { return JSON.parse(saved).content ?? initialValues?.content ?? "" } catch {} }
         return initialValues?.content ?? ""
     })
 
-    const [banner_image, setBanner_image] = useState(() => {
+    const [banner_image, setBanner_image] = useState<string>(() => {
         const saved = localStorage.getItem(draftKey)
         if (saved) { try { return JSON.parse(saved).banner_image ?? initialValues?.banner_image ?? "" } catch {} }
         return initialValues?.banner_image ?? ""
