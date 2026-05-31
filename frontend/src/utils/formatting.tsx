@@ -21,6 +21,7 @@ export const formatDate = (
 
 export const stripMarkdown = (content: string): string =>
   content
+    .replace(/```[\s\S]*?```/g, '')
     .replace(/#{1,6}\s+/g, '')
     .replace(/\*\*(.*?)\*\*/g, '$1')
     .replace(/\*(.*?)\*/g, '$1')

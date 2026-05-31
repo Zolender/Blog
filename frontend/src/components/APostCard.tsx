@@ -11,7 +11,8 @@ interface Props {
 const APostCard = ({ post }: Props) => {
     const initial = post.author_username.charAt(0).toUpperCase()
     const avatarColor = getAvatarColor(post.author_username)
-    const excerpt = stripMarkdown(post.content).slice(0, 140)
+    const strippedContent = stripMarkdown(post.content)
+    const excerpt = strippedContent.slice(0, 140)
 
     return (
         <motion.div
@@ -39,7 +40,7 @@ const APostCard = ({ post }: Props) => {
                     <h2 className="heading-card line-clamp-2">{post.title}</h2>
 
                     <p className="font-sans text-sm text-muted line-clamp-2 leading-relaxed">
-                        {excerpt}{post.content.length > 140 ? '...' : ''}
+                        {excerpt}{strippedContent.length > 140 ? '...' : ''}
                     </p>
 
                     <div className="flex items-center justify-between mt-1 pt-3 border-t border-border">

@@ -14,6 +14,18 @@ const pageVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
 }
 
+const getPageNumbers = (current: number, total: number): (number | '...')[] => {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const pages: (number | '...')[] = [1]
+  if (current > 3) pages.push('...')
+  for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+    pages.push(i)
+  }
+  if (current < total - 2) pages.push('...')
+  pages.push(total)
+  return pages
+}
+
 const FeedPage = () => {
   const [posts, setPosts]           = useState<Post[]>([])
   const [pagination, setPagination] = useState<PaginationMeta | null>(null)
@@ -93,7 +105,9 @@ const FeedPage = () => {
   }
 
   const [hero, ...rest] = posts
-  const heroExcerpt = stripMarkdown(hero.content).slice(0, 200)
+  const heroStripped = stripMarkdown(hero.content)
+  const heroExcerpt = heroStripped.slice(0, 200)
+  const heroQuote = heroStripped.slice(0, 120).trim()
 
   return (
     <motion.div variants={pageVariants} initial="hidden" animate="visible">
@@ -122,7 +136,7 @@ const FeedPage = () => {
               {hero.title}
             </h1>
             <p className="font-sans text-sm text-muted leading-relaxed line-clamp-2 mb-5">
-              {heroExcerpt}{hero.content.length > 200 ? '...' : ''}
+              {heroExcerpt}{heroStripped.length > 200 ? '...' : ''}
             </p>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -147,13 +161,16 @@ const FeedPage = () => {
           </div>
         </Link>
 
-        <PullQuote />
+        <PullQuote quote={heroQuote} />
 
-        {rest.length > 0 && (
+        {(rest.length > 0 || isLoading) && (
           <>
             <p className="meta-text uppercase tracking-widest mb-6">Curated Feed</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {rest.map((post) => <APostCard key={post.id} post={post} />)}
+              {isLoading
+                ? Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
+                : rest.map(post => <APostCard key={post.id} post={post} />)
+              }
             </div>
           </>
         )}
@@ -168,19 +185,23 @@ const FeedPage = () => {
               Previous
             </button>
 
-            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => handlePageChange(page)}
-                className={`w-8 h-8 font-sans text-xs border transition-colors duration-200 cursor-pointer
-                  ${page === currentPage
-                    ? 'bg-accent text-white border-accent'
-                    : 'border-border text-primary hover:bg-surface'
-                  }`}
-              >
-                {page}
-              </button>
-            ))}
+            {getPageNumbers(currentPage, pagination.totalPages).map((page, i) =>
+              page === '...' ? (
+                <span key={`ellipsis-${i}`} className="px-2 meta-text select-none">…</span>
+              ) : (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`w-8 h-8 font-sans text-xs border transition-colors duration-200 cursor-pointer
+                    ${page === currentPage
+                      ? 'bg-accent text-white border-accent'
+                      : 'border-border text-primary hover:bg-surface'
+                    }`}
+                >
+                  {page}
+                </button>
+              )
+            )}
 
             <button
               onClick={() => handlePageChange(currentPage + 1)}
