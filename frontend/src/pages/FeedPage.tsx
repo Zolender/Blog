@@ -127,7 +127,11 @@ const FeedPage = () => {
               {heroExcerpt}{heroStripped.length > 200 ? '...' : ''}
             </p>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <Link
+                to={`/users/${hero.author_username}`}
+                onClick={e => e.stopPropagation()}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              >
                 <div className={`avatar ${getAvatarColor(hero.author_username)}`}>
                   <span className="avatar-initial">
                     {hero.author_username.charAt(0).toUpperCase()}
@@ -136,7 +140,7 @@ const FeedPage = () => {
                 <span className="font-sans text-xs font-medium text-primary">
                   {hero.author_username}
                 </span>
-              </div>
+              </Link>
               <div className="flex items-center gap-3 meta-text">
                 <span className="flex items-center gap-1">
                   <Heart size={12} /> {hero.like_count}

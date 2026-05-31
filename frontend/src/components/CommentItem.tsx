@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router";
 import type { Comment } from "../types";
 import ConfirmModal from "./ConfirmModal";
 import { formatDate, getAvatarColor } from "../utils/formatting";
@@ -37,9 +38,12 @@ const CommentItem = ({comment, canModify, onDelete, onReply, showReplyButton}: C
 
                 <div className="flex-1 flex flex-col gap-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium font-sans text-primary">
+                        <Link
+                            to={`/users/${comment.author_username}`}
+                            className="text-sm font-medium font-sans text-primary hover:text-accent transition-colors"
+                        >
                             {comment.author_username}
-                        </span>
+                        </Link>
                         <span className="meta-text">{formatDate(comment.created_at)}</span>
                     </div>
 

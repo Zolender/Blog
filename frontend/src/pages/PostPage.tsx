@@ -220,19 +220,17 @@ const PostPage = () => {
                     <h1 className="heading-hero">{post.title}</h1>
                 
                     <div className="flex items-center justify-between flex-wrap gap-3">
-                        <div className="flex items-center gap-3">
+                        <Link to={`/users/${post.author_username}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                             <div className={`avatar-md ${getAvatarColor(post.author_username)}`}>
                                 <span className="avatar-initial text-sm!">
                                     {post.author_username.charAt(0).toUpperCase()}
                                 </span>
                             </div>
-                        
-
                             <div className="flex flex-col">
                                 <span className="text-sm font-medium font-sans text-primary">{post.author_username}</span>
                                 <span className="meta-text">{formatDate(post.created_at)} · {getReadTime(post.content)}</span>
                             </div>
-                        </div>
+                        </Link>
 
                         {canModifyPost && (
                             <div className="flex items-center gap-3">

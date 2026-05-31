@@ -15,6 +15,8 @@ import AuthPage from "./pages/AuthPage"
 import WriterLayout from "./layouts/WriterLayout"
 import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 import ResetPasswordPage from "./pages/ResetPasswordPage"
+import ProfilePage from "./pages/ProfilePage"
+import SettingsPage from "./pages/SettingsPage"
 import { MotionConfig } from "framer-motion"
 import SkeletonCard from "./components/SkeletonCard"
 
@@ -53,6 +55,8 @@ const App = () => {
                     <Route element={<RootLayout />}>
                         <Route index element={<FeedPage />} />
                         <Route path="posts/:id" element={<PostPage />} />
+                        <Route path="users/:username" element={<ProfilePage />} />
+                        <Route path="settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
                         <Route path="admin" element={<ProtectedRoute adminOnly><AdminPage /></ProtectedRoute>} />
                         <Route path="*" element={<NotFoundPage />} />
                     </Route>

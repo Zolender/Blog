@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router'
-import { Menu, Rss, PenLine, Shield, LogOut, LogIn, UserPlus } from 'lucide-react'
+import { Menu, Rss, PenLine, Shield, LogOut, LogIn, UserPlus, Settings } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppDispatch, useAppSelector } from '../app/hooks'
 import { logout } from '../features/auth/authSlice'
@@ -68,7 +68,10 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-5">
             {user ? (
               <>
-                <span className="meta-text">{user.username}</span>
+                <Link to={`/users/${user.username}`} className="meta-text hover:text-accent transition-colors">
+                  {user.username}
+                </Link>
+                <Link to="/settings" className={linkClass('/settings')}>Settings</Link>
                 <button onClick={handleLogout} className="nav-link cursor-pointer">
                   Logout
                 </button>
@@ -162,8 +165,26 @@ const Navbar = () => {
                   <>
                     <div className="px-3 py-2 mb-1">
                       <p className="font-sans text-xs text-muted">Signed in as</p>
-                      <p className="font-sans text-sm font-medium text-primary">{user.username}</p>
+                      <Link
+                        to={`/users/${user.username}`}
+                        onClick={() => setMobileOpen(false)}
+                        className="font-sans text-sm font-medium text-primary hover:text-accent transition-colors"
+                      >
+                        {user.username}
+                      </Link>
                     </div>
+                    <Link
+                      to="/settings"
+                      onClick={() => setMobileOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-3 font-sans text-sm rounded-sm transition-colors duration-200
+                        ${location.pathname === '/settings'
+                          ? 'text-accent bg-surface'
+                          : 'text-primary hover:text-accent hover:bg-surface'
+                        }`}
+                    >
+                      <Settings size={15} />
+                      Settings
+                    </Link>
                     <button
                       onClick={handleLogout}
                       className="flex items-center gap-3 px-3 py-3 font-sans text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-sm transition-colors duration-200 cursor-pointer text-left"

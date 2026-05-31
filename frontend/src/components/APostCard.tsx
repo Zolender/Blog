@@ -44,12 +44,16 @@ const APostCard = ({ post }: Props) => {
                     </p>
 
                     <div className="flex items-center justify-between mt-1 pt-3 border-t border-border">
-                        <div className="flex items-center gap-2">
+                        <Link
+                            to={`/users/${post.author_username}`}
+                            onClick={e => e.stopPropagation()}
+                            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                        >
                             <div className={`avatar ${avatarColor}`}>
                                 <span className="avatar-initial">{initial}</span>
                             </div>
                             <p className="font-sans text-xs font-medium text-primary">{post.author_username}</p>
-                        </div>
+                        </Link>
 
                         <div className="flex items-center gap-3 meta-text">
                             <span className="flex items-center gap-1">
