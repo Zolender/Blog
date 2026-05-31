@@ -81,6 +81,7 @@ Before writing a single query, we must define how our data lives together.
 - [x] GET `/auth/me` - Return current user from token (Protected)
 - [x] POST `/auth/forgot-password` - Send reset token via email (Resend)
 - [x] POST `/auth/reset-password` - Validate token and update password
+- [ ] PUT `/auth/me` - Update own profile (bio, profile_pic URL) (Protected)
 
 ### Post Routes
 - [x] GET `/posts` - Fetch all posts (paginated)
@@ -96,12 +97,17 @@ Before writing a single query, we must define how our data lives together.
 - [x] POST `/posts/:id/like` - Toggle like status (Authenticated users)
 
 ### User Routes
-- [ ] GET `/users/:username` - Fetch public profile + posts by author
+- [ ] GET `/users/:username` - Fetch public profile + posts by author (paginated)
+
+### Upload Routes
+- [ ] POST `/upload/avatar` - Upload avatar to Supabase Storage, return public URL (Protected)
 
 ### Admin Routes
 - [x] GET `/admin/users` - Fetch all users (Admin only)
 - [x] DELETE `/admin/users/:id` - Remove user (Admin only)
 - [x] PUT `/admin/users/:id/role` - Update user role (Admin only)
+- [ ] GET `/admin/posts` - Fetch all posts with author info (Admin only)
+- [ ] DELETE `/admin/posts/:id` - Delete any post (Admin only)
 
 ---
 
@@ -238,7 +244,7 @@ Goals: remove every trust-breaker. A stranger can use the app without hitting an
 - [x] Password reset flow — `ForgotPasswordPage`, `ResetPasswordPage`, Resend email, DB token table
 - [x] Fix 429 errors — tiered rate limiting strategy
 
-### Phase 9: Session 2 — "Has Depth" (next week)
+### Phase 9: Session 2 — "Has Depth"
 Goals: give users reasons to stay and come back.
 
 - [ ] Profile pages — `GET /users/:username`, public author page with bio + posts
@@ -246,6 +252,84 @@ Goals: give users reasons to stay and come back.
 - [ ] Edit comment — PUT endpoint + inline edit UI in CommentItem
 - [ ] Tags / categories — fixed tag set, filter feed by tag
 - [ ] Admin post management — list and delete any post from Admin Dashboard
+
+### Phase 10: Design Audit & Quality Pass ✅ COMPLETE
+Goals: fix every visual and accessibility issue before adding new features.
+
+- [x] Muted color contrast — `--color-muted` `#888` → `#666` (WCAG AA: 3.78:1 → 4.65:1 on `#FAFAFA`)
+- [x] Focus-visible rings — accent outline on `btn-primary`, `btn-ghost`, `nav-link`, `input-field`
+- [x] `btn-primary` display — `inline-block` → `inline-flex` with `align-items: center` (icon alignment fix)
+- [x] Prose code blocks — dark surface `#1c1c1c` + light text to visually distinguish from blockquotes
+- [x] Mobile nav panel gap — `top-20` → `top-16` so panel aligns flush with navbar bottom
+- [x] Hero post engagement — like count and comment count added to `FeedPage` hero card
+
+### Phase 11: Interaction Bug Fixes
+Goals: correct every silent failure and race condition a user could hit.
+
+- [ ] Like button request lock — `useRef` flag prevents duplicate API calls on rapid double-click
+- [ ] Orphaned replies — when a parent comment is deleted, also remove its children from local state
+- [ ] Banner image clear — fix backend `COALESCE` bug that prevents nulling `banner_image` after it's been set
+- [ ] Comment count mismatch — feed SQL counts all comments; `PostPage` header counts only top-level; align both
+- [ ] Type coercion — coerce `like_count` and `comment_count` from string to number in the posts API layer, not at every callsite
+
+### Phase 12: Editor Polish
+Goals: make the writing experience feel deliberate and professional.
+
+- [ ] Toolbar active state — background highlight on click, clears after 500ms (visual feedback without persistence)
+- [ ] Cursor placement — after injecting syntax, select the placeholder text so the user types over it immediately
+- [ ] Auto-growing textarea — expand height dynamically with content (`scrollHeight` on every content change)
+- [ ] Debounced autosave — save 1–2s after the user stops typing; keep the 30s interval as a fallback
+- [ ] Discard draft — add an "Undo" action button to the draft-restored toast so the user can start clean
+
+### Phase 13: App Loading & Motion Polish
+Goals: first impressions and motion consistency across the whole app.
+
+- [ ] App loading skeleton — replace bare `"Loading..."` text in `App.tsx` with a navbar bar + content pulse skeleton
+- [ ] Cold-start UX — show `"Waking up the server..."` message if the first API request takes longer than 3 seconds (Render free tier sleeps)
+- [ ] `prefers-reduced-motion` — use Framer Motion's `useReducedMotion()` hook; disable or reduce transitions for users who have it enabled in their OS
+- [ ] WriterLayout entrance animation — wrap editor content in a `motion.div` with `pageVariants` to match every other page
+
+### Phase 14: Feed & Content Fixes
+Goals: fix content correctness issues visible to every reader.
+
+- [ ] `stripMarkdown` fenced blocks — current regex misses multi-line ` ``` ` blocks; extend it to strip them
+- [ ] Excerpt ellipsis — check stripped text length, not raw `content.length`, before appending `...`
+- [ ] Pagination ellipsis — replace full page-number list with `1 … 4 5 6 … 20` pattern for large page counts
+- [ ] Page change skeleton — show skeleton only on the grid during pagination; keep the hero card visible
+- [ ] `PullQuote` dynamic — pull the quote from the featured post excerpt instead of a static hardcoded string
+
+### Phase 15: Profile & Identity
+Goals: every username on the site becomes a link to a real page; users have an identity.
+
+**Backend:**
+- [ ] `GET /users/:username` — return user info + their posts paginated
+- [ ] `PUT /auth/me` — update `bio` and `profile_pic` URL (Protected)
+- [ ] Add `updated_at` column to `posts` table; return in API responses
+
+**Frontend:**
+- [ ] `/users/:username` route + `ProfilePage` — bio, post count, join date, post grid
+- [ ] `/settings` route + `SettingsPage` — edit bio, profile pic URL input, change password form
+- [ ] Clickable author usernames — `FeedPage` hero, `APostCard`, `PostPage`, `CommentItem` all link to `/users/:username`
+- [ ] Settings link in Navbar — visible to logged-in users next to the logout button
+- [ ] `"Edited"` badge on `PostPage` — show `updated_at` timestamp when a post has been modified
+
+### Phase 16: Avatar File Upload
+Goals: let users upload an actual image instead of pasting a URL.
+
+- [ ] Supabase Storage — create `avatars` bucket, configure public read policy
+- [ ] `POST /upload/avatar` — backend generates a signed upload URL or proxies the upload directly
+- [ ] `SettingsPage` — replace profile pic URL input with a file picker; upload to Supabase Storage on select; save returned public URL
+
+### Phase 17: Auth & Security Hardening
+Goals: close the gaps before the project is fully "done".
+
+- [ ] Auth URL sync — push `/login` or `/register` to browser history when switching tabs in `AuthPage` so the URL stays in sync with the active tab
+- [ ] Auth route constant — replace all hardcoded `"/login"` strings in `navigate()` and `<Link to>` with a single shared constant
+- [ ] `beforeunload` guard — warn before tab close if `PostForm` content has changed since the last autosave
+- [ ] JWT expiry — verify `signToken` sets `expiresIn`; add `"7d"` if missing
+- [ ] Expired token cleanup — `DELETE FROM password_reset_tokens WHERE expires_at < NOW()` on every reset use
+- [ ] OG image fallback — use a default site image in `setPostMeta` when `post.banner_image` is null
+- [ ] Image CLS — add `width` and `height` attributes to all `<img>` elements to prevent layout shift on load
 
 ---
 
