@@ -25,10 +25,13 @@ export const ToastProvider = ({children}: {children: React.ReactNode}) => {
     const dismiss = useCallback((id: number)=> {
         setToasts(prev => prev.filter(t => t.id !== id))
     },[])
-    const showToast = useCallback((message:string, variant: ToastVariant = "success", action?: {label: string; onClick: ()=> void})=>{
-        const id = ++counter.current
-        setToasts(prev => [...prev, {id, message, variant, action}])
-        setTimeout(()=> dismiss(id), 3000)
+    const showToast = useCallback((message: string, variant: ToastVariant = "success", action?: { label: string; onClick: () => void }) => {
+        setToasts(prev => {
+            if (prev.some(t => t.message === message)) return prev
+            const id = ++counter.current
+            setTimeout(() => dismiss(id), 3000)
+            return [...prev, { id, message, variant, action }]
+        })
     }, [dismiss])
     
     
