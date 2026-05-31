@@ -20,7 +20,7 @@ const FeedPage = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [isLoading, setIsLoading]   = useState(true)
   const [error, setError]           = useState<string | null>(null)
-
+  const [showSlowMessage, setShowSlowMessage] = useState(false)
   const fetchPosts = async (page: number) => {
     setIsLoading(true)
     setError(null)
@@ -34,6 +34,12 @@ const FeedPage = () => {
       setIsLoading(false)
     }
   }
+
+  useEffect(()=>{
+    if(!isLoading){setShowSlowMessage(false); return}
+    const timer = setTimeout(()=> setShowSlowMessage(true), 3000)
+    return ()=> clearTimeout(timer)
+  }, [isLoading])
 
   useEffect(() => { fetchPosts(currentPage) }, [currentPage])
 

@@ -16,6 +16,7 @@ import WriterLayout from "./layouts/WriterLayout"
 import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 import ResetPasswordPage from "./pages/ResetPasswordPage"
 import { MotionConfig } from "framer-motion"
+import SkeletonCard from "./components/SkeletonCard"
 
 const App = () => {
     const dispatch    = useAppDispatch()
@@ -24,8 +25,14 @@ const App = () => {
     useEffect(() => { dispatch(rehydrateAuth()) }, [dispatch])
 
     if (isLoading) return (
-        <div className="state-container">
-            <p className="meta-text">Loading...</p>
+        <div className="min-h-screen bg-base">
+            <div className="h-16 bg-white border-b border-border" />
+            <div className="page-wrapper py-12">
+                <div className="skeleton w-full h-72 mb-10" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+                </div>
+            </div>
         </div>
     )
 
