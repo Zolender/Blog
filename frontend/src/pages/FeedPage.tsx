@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { RefreshCcw } from 'lucide-react'
+import { Heart, MessageCircle, RefreshCcw } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { PaginationMeta, Post } from '../types'
 import { postsApi } from '../api/posts'
@@ -113,15 +113,25 @@ const FeedPage = () => {
             <p className="font-sans text-sm text-muted leading-relaxed line-clamp-2 mb-5">
               {heroExcerpt}{hero.content.length > 200 ? '...' : ''}
             </p>
-            <div className="flex items-center gap-2">
-              <div className={`avatar ${getAvatarColor(hero.author_username)}`}>
-                <span className="avatar-initial">
-                  {hero.author_username.charAt(0).toUpperCase()}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={`avatar ${getAvatarColor(hero.author_username)}`}>
+                  <span className="avatar-initial">
+                    {hero.author_username.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <span className="font-sans text-xs font-medium text-primary">
+                  {hero.author_username}
                 </span>
               </div>
-              <span className="font-sans text-xs font-medium text-primary">
-                {hero.author_username}
-              </span>
+              <div className="flex items-center gap-3 meta-text">
+                <span className="flex items-center gap-1">
+                  <Heart size={12} /> {Number(hero.like_count)}
+                </span>
+                <span className="flex items-center gap-1">
+                  <MessageCircle size={12} /> {Number(hero.comment_count)}
+                </span>
+              </div>
             </div>
           </div>
         </Link>

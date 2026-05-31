@@ -6,7 +6,7 @@
   --color-accent-hover: #163D31;
   --color-surface:      #F0EFED;
   --color-border:       #E5E5E5;
-  --color-muted:        #888888;
+  --color-muted:        #666666;
   --color-base:         #FAFAFA;
   --color-primary:      #111111;
   --color-danger:       #dc2626;
@@ -42,7 +42,9 @@ body {
   padding: 0.5rem 1.5rem;
   transition: background-color 0.2s;
   cursor: pointer;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
 
   &:hover {
@@ -52,6 +54,11 @@ body {
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
   }
 }
 
@@ -74,6 +81,11 @@ body {
   &:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
   }
 }
 
@@ -107,6 +119,8 @@ body {
 
   &:focus {
     border-color: var(--color-accent);
+    outline: 2px solid var(--color-accent);
+    outline-offset: 0px;
   }
 }
 
@@ -299,6 +313,11 @@ body {
   &:hover {
     color: var(--color-accent);
   }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
 }
 
 @utility nav-link-active {
@@ -365,17 +384,17 @@ body {
   }
 
   & pre {
-    background-color: var(--color-surface);
+    background-color: #1c1c1c;
     padding: 1.25rem;
     overflow-x: auto;
     margin: 1.5rem 0;
-    border-left: 3px solid var(--color-accent);
   }
 
   & pre code {
     background: none;
     padding: 0;
     font-size: 0.875rem;
+    color: #e4e4e7;
   }
 
   & ul, & ol {

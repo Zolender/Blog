@@ -106,7 +106,7 @@ const Navbar = () => {
               key="panel"
               variants={panelVariants}
               initial="hidden" animate="visible" exit="exit"
-              className="fixed top-20 right-4 z-50 w-64 bg-white shadow-xl border border-border flex flex-col"
+              className="fixed top-16 right-4 z-50 w-64 bg-white shadow-xl border border-border flex flex-col"
             >
               <div className="flex items-center justify-between px-5 py-4 border-b border-border">
                 <span className="font-sans text-xs uppercase tracking-widest text-muted">
