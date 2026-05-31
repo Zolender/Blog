@@ -311,10 +311,12 @@ Goals: make the writing experience feel deliberate and professional.
 ### Phase 13: App Loading & Motion Polish
 Goals: first impressions and motion consistency across the whole app.
 
-- [ ] App loading skeleton — replace bare `"Loading..."` text in `App.tsx` with a navbar bar + content pulse skeleton
-- [ ] Cold-start UX — show `"Waking up the server..."` message if the first API request takes longer than 3 seconds (Render free tier sleeps)
-- [ ] `prefers-reduced-motion` — use Framer Motion's `useReducedMotion()` hook; disable or reduce transitions for users who have it enabled in their OS
-- [ ] WriterLayout entrance animation — wrap editor content in a `motion.div` with `pageVariants` to match every other page
+- [x] App loading skeleton — replace bare `"Loading..."` text in `App.tsx` with a navbar bar + content pulse skeleton
+- [x] Cold-start UX — show `"Waking up the server..."` message if the first API request takes longer than 3 seconds (Render free tier sleeps)
+- [x] `prefers-reduced-motion` — use Framer Motion's `useReducedMotion()` hook; disable or reduce transitions for users who have it enabled in their OS
+- [x] WriterLayout entrance animation — moved to PostForm root `motion.div` (WriterLayout is now a pure structural wrapper)
+- [x] EditPostPage loading state — replace bare text with `SkeletonEditor` component matching the writer layout
+- [ ] Route-aware app skeleton — `App.tsx` `isLoading` skeleton currently shows a feed layout even when the user is navigating directly to `/posts/new` or `/posts/:id/edit`; detect route and show the appropriate skeleton
 
 ### Phase 14: Feed & Content Fixes
 Goals: fix content correctness issues visible to every reader.
