@@ -71,6 +71,14 @@ Before writing a single query, we must define how our data lives together.
 - expires_at
 - created_at
 
+#### Password Reset Tokens
+**Attributes:**
+- id
+- user_id (FK → users, CASCADE DELETE)
+- token (unique)
+- expires_at
+- created_at
+
 ---
 
 ## 2. The API Contract (RESTful Architecture)
@@ -85,6 +93,7 @@ Before writing a single query, we must define how our data lives together.
 
 ### Post Routes
 - [x] GET `/posts` - Fetch all posts (paginated)
+- [x] GET `/posts/:id` - Fetch single post with author details, threaded comments, and `is_liked`
 - [x] GET `/posts/:id` - Fetch single post with author details, threaded comments, and `is_liked`
 - [x] POST `/posts` - Create post (Protected: Authenticated users)
 - [x] PUT `/posts/:id` - Edit post (Protected: Author or Admin)
@@ -165,6 +174,7 @@ Before writing a single query, we must define how our data lives together.
 
 ### Phase 4: Hardening
 - [x] Add tiered rate limiting — strict on auth mutations, relaxed on /auth/me, general on posts/admin
+- [x] Add tiered rate limiting — strict on auth mutations, relaxed on /auth/me, general on posts/admin
 - [x] Add security headers (`helmet`)
 - [x] Add pagination to `GET /posts`
 - [x] Add database indexes on foreign key columns
@@ -183,6 +193,7 @@ Before writing a single query, we must define how our data lives together.
 - [x] Build RootLayout with Navbar and Outlet
 - [x] Build ProtectedRoute and GuestRoute components
 - [x] Set up full React Router v7 route tree in App.tsx
+- [x] Build Login and Register pages (merged into AuthPage with tab toggle)
 - [x] Build Login and Register pages (merged into AuthPage with tab toggle)
 - [x] Build Feed page with pagination
 - [x] Build single Post page with threaded comments
@@ -205,6 +216,7 @@ Before writing a single query, we must define how our data lives together.
 - [x] Apply design system to Footer
 - [x] Build `FloatingInput` component (animated label)
 - [x] Build `PostCard` (`APostCard`) with skeleton, avatar, read time, engagement row
+- [x] Build `PostCard` (`APostCard`) with skeleton, avatar, read time, engagement row
 - [x] Build `SkeletonCard` and `PullQuote` as standalone components
 - [x] Extract shared helpers into `src/utils/formatting.tsx`
 - [x] Merge Login and Register into single `AuthPage` with tab toggle
@@ -222,7 +234,18 @@ Before writing a single query, we must define how our data lives together.
 - [x] Build 404 page — styled, with document.title
 - [x] Add `document.title` to all routes (Feed, Auth, Write, Edit, Post, Admin, 404, Forgot, Reset)
 - [x] Add Open Graph + Twitter Card meta tags to Single Post page (`src/utils/meta.ts`)
+- [x] Build 404 page — styled, with document.title
+- [x] Add `document.title` to all routes (Feed, Auth, Write, Edit, Post, Admin, 404, Forgot, Reset)
+- [x] Add Open Graph + Twitter Card meta tags to Single Post page (`src/utils/meta.ts`)
 - [x] Add `stripMarkdown` helper — clean excerpts in Feed hero and PostCard
+- [x] Fix `liked` state — `GET /posts/:id` uses `optionalProtect` middleware, returns `is_liked` per user
+- [x] Add React Error Boundary — wraps `<Outlet>` in RootLayout, Navbar always accessible
+- [x] Draft autosave — localStorage, 30s interval, `draftKey` prop, cleared on successful publish
+- [x] Mobile responsive audit — all pages verified at 375px
+- [x] Refactor Admin page — replace native `<select>` with `RoleToggle` pill component
+- [x] Replace `btn-danger` text link with `btn-danger-solid` button in Admin actions
+- [x] Fix hydration warning — split `SkeletonAdminRow` into `SkeletonAdminCard` + `SkeletonAdminTableRow`
+- [x] Fix 429 rate limit errors — tiered limiters, `/auth/me` gets relaxed limit (200/15min)
 - [x] Fix `liked` state — `GET /posts/:id` uses `optionalProtect` middleware, returns `is_liked` per user
 - [x] Add React Error Boundary — wraps `<Outlet>` in RootLayout, Navbar always accessible
 - [x] Draft autosave — localStorage, 30s interval, `draftKey` prop, cleared on successful publish
@@ -233,6 +256,7 @@ Before writing a single query, we must define how our data lives together.
 - [x] Fix 429 rate limit errors — tiered limiters, `/auth/me` gets relaxed limit (200/15min)
 
 ### Phase 8: Session 1 — "Feels Finished" ✅ COMPLETE
+### Phase 8: Session 1 — "Feels Finished" ✅ COMPLETE
 Goals: remove every trust-breaker. A stranger can use the app without hitting anything broken or missing.
 
 - [x] `liked` / `is_liked` — GET `/posts/:id` returns whether current user liked the post
@@ -240,6 +264,9 @@ Goals: remove every trust-breaker. A stranger can use the app without hitting an
 - [x] `document.title` on all routes
 - [x] React Error Boundary
 - [x] 404 page
+- [x] Draft autosave (localStorage, PostForm, `draftKey` prop)
+- [x] Password reset flow — `ForgotPasswordPage`, `ResetPasswordPage`, Resend email, DB token table
+- [x] Fix 429 errors — tiered rate limiting strategy
 - [x] Draft autosave (localStorage, PostForm, `draftKey` prop)
 - [x] Password reset flow — `ForgotPasswordPage`, `ResetPasswordPage`, Resend email, DB token table
 - [x] Fix 429 errors — tiered rate limiting strategy
@@ -376,7 +403,11 @@ uses that directly. No component code changes between environments.
 frontend/
 ├── src/
 │   ├── api/            ← HTTP call modules (auth, posts, admin)
+│   ├── api/            ← HTTP call modules (auth, posts, admin)
 │   ├── app/            ← Redux store and typed hooks
+│   ├── components/     ← Reusable UI (Navbar, PostCard, SkeletonCard, SkeletonPost,
+│   │                      SkeletonAdminCard, SkeletonAdminTableRow, ConfirmModal,
+│   │                      Toast, ErrorBoundary, FloatingInput, CommentItem...)
 │   ├── components/     ← Reusable UI (Navbar, PostCard, SkeletonCard, SkeletonPost,
 │   │                      SkeletonAdminCard, SkeletonAdminTableRow, ConfirmModal,
 │   │                      Toast, ErrorBoundary, FloatingInput, CommentItem...)
@@ -384,7 +415,10 @@ frontend/
 │   ├── layouts/        ← RootLayout, WriterLayout
 │   ├── pages/          ← FeedPage, PostPage, AuthPage, NewPostPage, EditPostPage,
 │   │                      AdminPage, NotFoundPage, ForgotPasswordPage, ResetPasswordPage
+│   ├── pages/          ← FeedPage, PostPage, AuthPage, NewPostPage, EditPostPage,
+│   │                      AdminPage, NotFoundPage, ForgotPasswordPage, ResetPasswordPage
 │   ├── types/          ← Shared TypeScript interfaces
+│   ├── utils/          ← formatting.tsx (helpers + stripMarkdown), meta.ts (OG tags)
 │   ├── utils/          ← formatting.tsx (helpers + stripMarkdown), meta.ts (OG tags)
 │   ├── App.tsx         ← Router definition
 │   └── main.tsx        ← Entry point, Redux Provider, ToastProvider
@@ -412,6 +446,10 @@ frontend/
 - Framer Motion page transitions and micro-interactions
 - Mobile-first responsive — implemented inline per page, not as a separate pass
 - Markdown support in post body — written with toolbar, rendered with `react-markdown` + `remark-gfm`
+- Draft autosave — localStorage, 30s interval, cleared on publish, restored with toast on mount
+- Error boundaries — graceful fallback on component crashes, Navbar always accessible
+- Password reset — time-limited token, Resend email, "check your inbox" confirmation state
+
 - Draft autosave — localStorage, 30s interval, cleared on publish, restored with toast on mount
 - Error boundaries — graceful fallback on component crashes, Navbar always accessible
 - Password reset — time-limited token, Resend email, "check your inbox" confirmation state
