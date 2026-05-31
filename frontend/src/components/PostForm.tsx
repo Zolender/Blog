@@ -62,13 +62,21 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
         }
     }, [])
 
-    // autosave every 30 seconds
+    // autosave
     useEffect(() => {
-        const interval = setInterval(() => {
+        const timer = setTimeout(() => {
             localStorage.setItem(draftKey, JSON.stringify({ title, content, banner_image }))
-        }, 30_000)
-        return () => clearInterval(interval)
+        }, 1500)
+        return () => clearTimeout(timer)
     }, [title, content, banner_image, draftKey])
+
+    useEffect(()=>{
+        const el = textareaRef.current
+        if(!el)return 
+        el.style.height = 'auto'
+        el.style.height = `${el.scrollHeight}px`
+    }, [content])
+
 
     const wordCount = content.trim() === "" ? 0 : content.trim().split(/\s+/).length
 
@@ -89,8 +97,9 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
         setContent(next)
         requestAnimationFrame(() => {
             el.focus()
-            const cur = start + before.length + selected.length
-            el.setSelectionRange(cur, cur)
+            const selfStart = start + before.length
+            const selfEnd = selfStart + selected.length
+            el.setSelectionRange(selfStart, selfEnd)
         })
     }, [content])
 
@@ -226,8 +235,7 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
                             onChange={e => setContent(e.target.value)}
                             placeholder="Begin your narrative here..."
                             required
-                            rows={28}
-                            className="w-full bg-transparent border-none outline-none resize-none body-text placeholder:text-muted/30 p-5"
+                            className="w-full bg-transparent border-none outline-none resize-none body-text placeholder:text-muted/30 p-5 min-h-[60vh]"
                         />
                     </div>
                 )}
