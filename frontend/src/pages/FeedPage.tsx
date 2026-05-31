@@ -126,10 +126,10 @@ const FeedPage = () => {
               </div>
               <div className="flex items-center gap-3 meta-text">
                 <span className="flex items-center gap-1">
-                  <Heart size={12} /> {Number(hero.like_count)}
+                  <Heart size={12} /> {hero.like_count}
                 </span>
                 <span className="flex items-center gap-1">
-                  <MessageCircle size={12} /> {Number(hero.comment_count)}
+                  <MessageCircle size={12} /> {hero.comment_count}
                 </span>
               </div>
             </div>

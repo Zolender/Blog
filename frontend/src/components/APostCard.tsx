@@ -52,10 +52,10 @@ const APostCard = ({ post }: Props) => {
 
                         <div className="flex items-center gap-3 meta-text">
                             <span className="flex items-center gap-1">
-                                <Heart size={12} /> {Number(post.like_count)}
+                                <Heart size={12} /> {post.like_count}
                             </span>
                             <span className="flex items-center gap-1">
-                                <MessageCircle size={12} /> {Number(post.comment_count)}
+                                <MessageCircle size={12} /> {post.comment_count}
                             </span>
                         </div>
                     </div>

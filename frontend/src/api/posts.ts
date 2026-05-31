@@ -3,8 +3,23 @@ import { apiClient } from "./client";
 
 
 export const postsApi = {
-    getAll: (page= 1, limit = 20) => apiClient.get<{posts: Post[]; pagination : PaginationMeta}>(`/posts?page=${page}&limit=${limit}`),
-    getById: (id: number)=> apiClient.get<{post: Post; comments: Comment[]}>(`/posts/${id}`),
+    getAll: async (page= 1, limit = 20) => {
+        const data = await apiClient.get<{posts: Post[]; pagination : PaginationMeta}>(`/posts?page=${page}&limit=${limit}`)
+        return {
+            ...data,
+            posts: data.posts.map(p=>({...p, like_count: Number(p.like_count), comment_count : Number(p.comment_count)}))
+        }
+    },
+    getById: async (id: number)=> {
+        const data = await apiClient.get<{post: Post; comments: Comment[]}>(`/posts/${id}`)
+        return {
+            ...data, post: {
+                ...data.post,
+                like_count: Number(data.post.like_count),
+                comment_count: Number(data.post.comment_count)
+            }
+        }
+    },
     create: (data: {title: string; content: string; banner_image?: string})=> apiClient.post<{post: Post}>("/posts", data),
     update: (id: number, data: Partial<{title: string; content: string; banner_image: string}>)=>{
         return apiClient.put<{post: Post}>(`/posts/${id}`, data)

@@ -50,7 +50,7 @@ const PostPage = () => {
                 const data = await postsApi.getById(Number(id))
                 setPost(data.post)
                 setComments(data.comments)
-                setLikeCount(Number(data.post.like_count))
+                setLikeCount(data.post.like_count)
                 setLiked(data.post.is_liked)
             }catch(err){
                 setError(err instanceof Error ? err.message : "Failed to load post")

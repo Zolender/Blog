@@ -17,8 +17,8 @@ export interface Post{
     author_id: number
     author_username: string
     author_profile_pic: string | null
-    like_count: string
-    comment_count: string
+    like_count: number
+    comment_count: number
     is_liked: boolean
 }
 
