@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router";
 import { useAppSelector } from "../app/hooks";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Post, Comment } from "../types";
 import { postsApi } from "../api/posts";
 import CommentItem from "../components/CommentItem";
@@ -26,7 +26,7 @@ const PostPage = () => {
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null >(null)
     
-    const [liked, setLiked] = useState(false)//we get to track this one for immediate ui feedback purposes, a part of a technique called optimistic programming or sth like that
+    const [liked, setLiked] = useState(false)//we get to track this one for immediate ui feedback purposes, a part of a technique called optimistic ui or sth like that
     const [likeCount, setLikeCount] = useState(0)
 
     const [commentContent, setCommentContent] = useState("")
@@ -39,7 +39,7 @@ const PostPage = () => {
     const [replyLoading, setReplyLoading] = useState(false)
 
     const [deletePostOpen, setDeletePostOpen] = useState(false)
-
+    const likingRef = useRef(false)
 
     useEffect(()=>{
         const fetchPost = async () => {
@@ -89,8 +89,11 @@ const PostPage = () => {
         if(!user){
             return navigate("/login")
         }
-        //we would change the ui immediately before the server responses so that
-        //the user doesn't get to wait to see the feedback, like it makes the app less laggy, and when the server operation fails we would just silently roll back to the previous state
+        
+        if(likingRef.current) return
+        likingRef.current = true
+        
+        
         const wasLiked = liked
         const prevCount = likeCount
 
@@ -102,6 +105,8 @@ const PostPage = () => {
         }catch(err){
             setLiked(wasLiked)
             setLikeCount(prevCount)
+        }finally{
+            likingRef.current = false
         }
     }
 
@@ -156,12 +161,10 @@ const PostPage = () => {
     }
 
 
-    //deleting a comment, would need an handler as well
     const handleDeleteComment = async (commentId: number)=>{
         try{
             await postsApi.deleteComment(Number(id), commentId)
-            //we would remove it from the local state without refetching again
-            setComments((prev)=> prev.filter((c)=> c.id!==commentId))
+            setComments((prev)=> prev.filter((c)=> c.id!==commentId && c.parent_id !== commentId))
         }catch(err){
             showToast(err instanceof Error? err.message: "Failed to delete comment", "error")
         }
