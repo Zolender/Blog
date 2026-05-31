@@ -30,6 +30,7 @@ const NewPostPage = () => {
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to create post")
             setIsLoading(false)
+            throw err
         }
     }
 

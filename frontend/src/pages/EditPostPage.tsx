@@ -55,6 +55,7 @@ const EditPostPage = () => {
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to update post")
             setIsLoading(false)
+            throw err
         }
     }
 

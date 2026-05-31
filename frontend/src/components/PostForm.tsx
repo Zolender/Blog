@@ -1,4 +1,4 @@
-import { ArrowLeft, Bold, Code, Code2, Edit2, Eye, Heading2, Image, Italic, Link as LinkIcon, List, Minus, Quote, StrikethroughIcon } from "lucide-react"
+import { ArrowLeft, Bold, Code, Code2, Edit2, Eye, Heading2, Image, ImagePlus, Italic, Link as LinkIcon, List, Minus, Quote, StrikethroughIcon, X } from "lucide-react"
 import { useCallback, useEffect, useRef, useState, type SubmitEvent } from "react"
 import { motion } from "framer-motion"
 import { useNavigate } from "react-router"
@@ -22,48 +22,46 @@ interface PostFormProps {
 }
 
 const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draftKey }: PostFormProps) => {
-    const navigate = useNavigate()
-    const { showToast } = useToast()
+    const navigate       = useNavigate()
+    const { showToast }  = useToast()
     const [isPreview, setIsPreview] = useState(false)
-    const [activeButtons, setActiveButtons] = useState<Set<string>>(new Set())
-    const textareaRef = useRef<HTMLTextAreaElement>(null)
-    const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
 
-    // on mount we'd restore draft if one exists, otherwise fall back to initialValues
+    // Two separate active-state buckets:
+    // flashedButtons — temporary click/shortcut feedback (fades after 500ms)
+    // contextualActive — persistent highlight when cursor is inside that formatting
+    const [flashedButtons, setFlashedButtons]     = useState<Set<string>>(new Set())
+    const [contextualActive, setContextualActive] = useState<Set<string>>(new Set())
+
+    const textareaRef    = useRef<HTMLTextAreaElement>(null)
+    const titleRef       = useRef<HTMLTextAreaElement>(null)
+    const timersRef      = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+    const isFirstRender  = useRef(true)
+
     const [title, setTitle] = useState(() => {
         const saved = localStorage.getItem(draftKey)
-        if (saved) {
-            try { return JSON.parse(saved).title ?? initialValues?.title ?? "" }
-            catch { return initialValues?.title ?? "" }
-        }
+        if (saved) { try { return JSON.parse(saved).title ?? initialValues?.title ?? "" } catch {} }
         return initialValues?.title ?? ""
     })
 
     const [content, setContent] = useState(() => {
         const saved = localStorage.getItem(draftKey)
-        if (saved) {
-            try { return JSON.parse(saved).content ?? initialValues?.content ?? "" }
-            catch { return initialValues?.content ?? "" }
-        }
+        if (saved) { try { return JSON.parse(saved).content ?? initialValues?.content ?? "" } catch {} }
         return initialValues?.content ?? ""
     })
 
     const [banner_image, setBanner_image] = useState(() => {
         const saved = localStorage.getItem(draftKey)
-        if (saved) {
-            try { return JSON.parse(saved).banner_image ?? initialValues?.banner_image ?? "" }
-            catch { return initialValues?.banner_image ?? "" }
-        }
+        if (saved) { try { return JSON.parse(saved).banner_image ?? initialValues?.banner_image ?? "" } catch {} }
         return initialValues?.banner_image ?? ""
     })
 
-    // notify user if a draft was restored
+    // Notify on draft restore
     useEffect(() => {
         const saved = localStorage.getItem(draftKey)
         if (saved) {
             showToast("Draft restored", "success", {
                 label: "Discard",
-                onClick: ()=>{
+                onClick: () => {
                     localStorage.removeItem(draftKey)
                     setTitle(initialValues?.title ?? "")
                     setContent(initialValues?.content ?? "")
@@ -73,87 +71,244 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
         }
     }, [])
 
-    // autosave
+    // Debounced autosave — skip the very first render to avoid writing back the same draft
     useEffect(() => {
+        if (isFirstRender.current) { isFirstRender.current = false; return }
         const timer = setTimeout(() => {
             localStorage.setItem(draftKey, JSON.stringify({ title, content, banner_image }))
         }, 1500)
         return () => clearTimeout(timer)
     }, [title, content, banner_image, draftKey])
 
-    useEffect(()=>{
+    // Content textarea auto-grow
+    useEffect(() => {
         const el = textareaRef.current
-        if(!el)return 
-        el.style.height = 'auto'
+        if (!el) return
+        el.style.height = "auto"
         el.style.height = `${el.scrollHeight}px`
     }, [content])
 
+    // Title textarea auto-grow
+    useEffect(() => {
+        const el = titleRef.current
+        if (!el) return
+        el.style.height = "auto"
+        el.style.height = `${el.scrollHeight}px`
+    }, [title])
 
     const wordCount = content.trim() === "" ? 0 : content.trim().split(/\s+/).length
 
+    // Derive the loading button label from the action label so "Publish" → "Publishing..."
+    const loadingLabel = submitLabel === "Publish" ? "Publishing..." : "Saving..."
+
     const handleSubmit = async (e: SubmitEvent) => {
         e.preventDefault()
-        await onSubmit({ title, content, banner_image })
-        // clear draft on successful submit
-        localStorage.removeItem(draftKey)
+        try {
+            await onSubmit({ title, content, banner_image })
+            localStorage.removeItem(draftKey)   // only clear draft on success
+        } catch {
+            // parent already displays the error; we just don't clear the draft
+        }
     }
 
-    const injectWrap = useCallback((before: string, after: string, defaultText: string) => {
-        const el = textareaRef.current
-        if (!el) return
-        const start = el.selectionStart
-        const end = el.selectionEnd
-        const selected = content.slice(start, end) || defaultText
-        const next = content.slice(0, start) + before + selected + after + content.slice(end)
-        setContent(next)
-        requestAnimationFrame(() => {
-            el.focus()
-            const selfStart = start + before.length
-            const selfEnd = selfStart + selected.length
-            el.setSelectionRange(selfStart, selfEnd)
-        })
-    }, [content])
-
-    const injectLinePrefix = useCallback((prefix: string) => {
-        const el = textareaRef.current
-        if (!el) return
-        const start = el.selectionStart
-        const lineStart = content.lastIndexOf("\n", start - 1) + 1
-        const next = content.slice(0, lineStart) + prefix + content.slice(lineStart)
-        setContent(next)
-        requestAnimationFrame(() => {
-            el.focus()
-            el.setSelectionRange(start + prefix.length, start + prefix.length)
-        })
-    }, [content])
-
-    const handleToolbarClick = (label: string, action: () => void) => {
-        action()
+    // Flash a toolbar button briefly (click/shortcut feedback)
+    const flashButton = useCallback((label: string) => {
         if (timersRef.current.has(label)) clearTimeout(timersRef.current.get(label))
-        setActiveButtons(prev => new Set([...prev, label]))
+        setFlashedButtons(prev => new Set([...prev, label]))
         const timer = setTimeout(() => {
-            setActiveButtons(prev => {
-                const next = new Set(prev)
-                next.delete(label)
-                return next
-            })
+            setFlashedButtons(prev => { const n = new Set(prev); n.delete(label); return n })
             timersRef.current.delete(label)
         }, 500)
         timersRef.current.set(label, timer)
+    }, [])
+
+    // Scan the cursor's surroundings and update which toolbar buttons should appear active
+    const checkContext = useCallback(() => {
+        const el = textareaRef.current
+        if (!el) return
+        const pos  = el.selectionStart
+        const end  = el.selectionEnd
+        const active = new Set<string>()
+
+        // Line-prefix checks
+        const lineStart = content.lastIndexOf("\n", pos - 1) + 1
+        const line = content.slice(lineStart)
+        if (line.startsWith("## ")) active.add("Heading")
+        if (line.startsWith("> "))  active.add("Blockquote")
+        if (line.startsWith("- "))  active.add("List Item")
+
+        // Inline-wrap checks (single-line only)
+        const before = content.slice(0, pos)
+        const after  = content.slice(end)
+
+        const checkWrap = (marker: string, label: string) => {
+            const last = before.lastIndexOf(marker)
+            if (last === -1) return
+            const between = before.slice(last + marker.length)
+            if (between.includes(marker) || between.includes("\n")) return
+            if (after.indexOf(marker) !== -1) active.add(label)
+        }
+
+        // Check ** before * so bold doesn't trigger the italic check
+        checkWrap("**", "Bold")
+        if (!active.has("Bold")) checkWrap("*", "Italic")
+        checkWrap("`",  "Inline code")
+        checkWrap("~~", "StrikeThrough")
+
+        setContextualActive(active)
+    }, [content])
+
+    // Toggle a line-prefix on/off (heading, blockquote, list)
+    const toggleLinePrefix = useCallback((prefix: string) => {
+        const el = textareaRef.current
+        if (!el) return
+        const start     = el.selectionStart
+        const lineStart = content.lastIndexOf("\n", start - 1) + 1
+        const line      = content.slice(lineStart)
+
+        if (line.startsWith(prefix)) {
+            const next = content.slice(0, lineStart) + line.slice(prefix.length)
+            setContent(next)
+            requestAnimationFrame(() => {
+                el.focus()
+                el.setSelectionRange(Math.max(lineStart, start - prefix.length), Math.max(lineStart, start - prefix.length))
+            })
+        } else {
+            const next = content.slice(0, lineStart) + prefix + content.slice(lineStart)
+            setContent(next)
+            requestAnimationFrame(() => {
+                el.focus()
+                el.setSelectionRange(start + prefix.length, start + prefix.length)
+            })
+        }
+    }, [content])
+
+    // Toggle inline-wrap markers on/off (bold, italic, code, etc.)
+    const toggleWrap = useCallback((before: string, after: string, defaultText: string) => {
+        const el = textareaRef.current
+        if (!el) return
+        const selStart = el.selectionStart
+        const selEnd   = el.selectionEnd
+        const selected = content.slice(selStart, selEnd)
+
+        // If no closing marker, treat as pure insertion (e.g. divider — handled in toolbarItems directly)
+        if (!after) {
+            const next = content.slice(0, selStart) + before + content.slice(selEnd)
+            setContent(next)
+            requestAnimationFrame(() => {
+                el.focus()
+                el.setSelectionRange(selStart + before.length, selStart + before.length)
+            })
+            return
+        }
+
+        // Remove: selection is surrounded by markers
+        if (selStart >= before.length) {
+            const hasBefore = content.slice(selStart - before.length, selStart) === before
+            const hasAfter  = content.slice(selEnd, selEnd + after.length) === after
+            if (hasBefore && hasAfter) {
+                const next = content.slice(0, selStart - before.length) + selected + content.slice(selEnd + after.length)
+                setContent(next)
+                requestAnimationFrame(() => {
+                    el.focus()
+                    el.setSelectionRange(selStart - before.length, selEnd - before.length)
+                })
+                return
+            }
+        }
+
+        // Remove: cursor sits inside markers (no selection)
+        if (selStart === selEnd) {
+            const textBefore = content.slice(0, selStart)
+            const textAfter  = content.slice(selStart)
+            const lastMark   = textBefore.lastIndexOf(before)
+            if (lastMark !== -1) {
+                const between  = textBefore.slice(lastMark + before.length)
+                const noClose  = !between.includes(after) && !between.includes("\n")
+                const firstClose = textAfter.indexOf(after)
+                if (noClose && firstClose !== -1) {
+                    const inner = between + textAfter.slice(0, firstClose)
+                    const next  = content.slice(0, lastMark) + inner + content.slice(selStart + firstClose + after.length)
+                    setContent(next)
+                    requestAnimationFrame(() => {
+                        el.focus()
+                        const p = lastMark + between.length
+                        el.setSelectionRange(p, p)
+                    })
+                    return
+                }
+            }
+        }
+
+        // Default: wrap (or insert with placeholder)
+        const insert = selected || defaultText
+        const next   = content.slice(0, selStart) + before + insert + after + content.slice(selEnd)
+        setContent(next)
+        requestAnimationFrame(() => {
+            el.focus()
+            el.setSelectionRange(selStart + before.length, selStart + before.length + insert.length)
+        })
+    }, [content])
+
+    const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        // Tab → 2 spaces instead of losing focus
+        if (e.key === "Tab") {
+            e.preventDefault()
+            const el = textareaRef.current!
+            const s = el.selectionStart
+            const end = el.selectionEnd
+            setContent(prev => prev.slice(0, s) + "  " + prev.slice(end))
+            requestAnimationFrame(() => { el.focus(); el.setSelectionRange(s + 2, s + 2) })
+            return
+        }
+
+        const mod = e.metaKey || e.ctrlKey
+        if (!mod) return
+        const key = e.key.toLowerCase()
+
+        if (e.shiftKey) {
+            if (key === "c") { e.preventDefault(); toggleWrap("\n```\n", "\n```\n", "code here"); flashButton("Code Block") }
+            return
+        }
+
+        switch (key) {
+            case "b": e.preventDefault(); toggleWrap("**", "**", "bold text");    flashButton("Bold");        break
+            case "i": e.preventDefault(); toggleWrap("*",  "*",  "italic text");  flashButton("Italic");      break
+            case "k": e.preventDefault(); toggleWrap("[",  "](url)", "link text");flashButton("Link");        break
+            case "e": e.preventDefault(); toggleWrap("`",  "`",  "code");         flashButton("Inline code"); break
+        }
+    }, [toggleWrap, flashButton])
+
+    const handleToolbarClick = (label: string, action: () => void) => {
+        action()
+        flashButton(label)
     }
 
     const toolbarItems = [
-        { icon: <Bold size={14} />, label: "Bold", action: () => injectWrap("**", "**", "bold text") },
-        { icon: <Italic size={14} />, label: "Italic", action: () => injectWrap("*", "*", "italic text") },
-        { icon: <Heading2 size={14} />, label: "Heading", action: () => injectLinePrefix("## ") },
-        { icon: <Code size={14} />, label: "Inline code", action: () => injectWrap("`", "`", "code") },
-        { icon: <Quote size={14} />, label: "Blockquote", action: () => injectLinePrefix("> ") },
-        { icon: <List size={14} />, label: "List Item", action: () => injectLinePrefix("- ") },
-        { icon: <Minus size={14} />, label: "Divider", action: () => injectWrap("\n\n---\n\n", "", "") },
-        { icon: <StrikethroughIcon size={14} />, label: "StrikeThrough", action: () => injectWrap("~~", "~~", "strikethrough text") },
-        { icon: <Code2 size={14} />, label: "Code Block", action: () => injectWrap("\n```\n", "\n```\n", "code here") },
-        { icon: <LinkIcon size={14} />, label: "Link", action: () => injectWrap("[", "](url)", "link text") },
-        { icon: <Image size={14} />, label: "Image", action: () => injectWrap("![", "](url)", "alt text") },
+        { icon: <Bold size={14} />,             label: "Bold",        hint: "Ctrl+B",       action: () => toggleWrap("**", "**", "bold text") },
+        { icon: <Italic size={14} />,           label: "Italic",      hint: "Ctrl+I",       action: () => toggleWrap("*", "*", "italic text") },
+        { icon: <Heading2 size={14} />,         label: "Heading",     hint: "",             action: () => toggleLinePrefix("## ") },
+        { icon: <Code size={14} />,             label: "Inline code", hint: "Ctrl+E",       action: () => toggleWrap("`", "`", "code") },
+        { icon: <Quote size={14} />,            label: "Blockquote",  hint: "",             action: () => toggleLinePrefix("> ") },
+        { icon: <List size={14} />,             label: "List Item",   hint: "",             action: () => toggleLinePrefix("- ") },
+        {
+            icon: <Minus size={14} />,
+            label: "Divider",
+            hint: "",
+            // Divider is always an insertion — no toggling, no wrapping
+            action: () => {
+                const el = textareaRef.current
+                if (!el) return
+                const pos = el.selectionEnd
+                const divider = "\n\n---\n\n"
+                setContent(prev => prev.slice(0, pos) + divider + prev.slice(pos))
+                requestAnimationFrame(() => { el.focus(); el.setSelectionRange(pos + divider.length, pos + divider.length) })
+            }
+        },
+        { icon: <StrikethroughIcon size={14} />, label: "StrikeThrough", hint: "",           action: () => toggleWrap("~~", "~~", "strikethrough text") },
+        { icon: <Code2 size={14} />,             label: "Code Block",    hint: "Ctrl+Shift+C", action: () => toggleWrap("\n```\n", "\n```\n", "code here") },
+        { icon: <LinkIcon size={14} />,          label: "Link",          hint: "Ctrl+K",     action: () => toggleWrap("[", "](url)", "link text") },
+        { icon: <Image size={14} />,             label: "Image",         hint: "",           action: () => toggleWrap("![", "](url)", "alt text") },
     ]
 
     return (
@@ -163,14 +318,13 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
         >
-
             <header className="sticky top-0 z-10 bg-base border-b border-border">
                 <div className="page-wrapper h-14 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <button
                             type="button"
                             onClick={() => navigate(-1)}
-                            className="flex items-center gap-1.5 text-muted hover:text-primary transition-colors"
+                            className="flex items-center gap-1.5 text-muted hover:text-primary transition-colors px-1 py-2"
                         >
                             <ArrowLeft size={18} />
                             <span className="hidden sm:inline text-sm">Back</span>
@@ -180,10 +334,14 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-3">
-                        <span className="meta-text hidden sm:inline">{wordCount} words</span>
+                        {/* Word count visible on all screen sizes */}
+                        <span className="meta-text">{wordCount} words</span>
                         <button
                             type="button"
-                            onClick={() => setIsPreview(v => !v)}
+                            onClick={() => {
+                                setIsPreview(v => !v)
+                                window.scrollTo({ top: 0, behavior: "smooth" })
+                            }}
                             className="btn-ghost flex items-center gap-1.5 px-3! text-xs!"
                         >
                             {isPreview ? <><Edit2 size={12} /> Write</> : <><Eye size={12} /> Preview</>}
@@ -194,7 +352,7 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
                             form="post-form"
                             disabled={isLoading}
                         >
-                            {isLoading ? "Saving..." : submitLabel}
+                            {isLoading ? loadingLabel : submitLabel}
                         </button>
                     </div>
                 </div>
@@ -203,9 +361,10 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
             <form id="post-form" onSubmit={handleSubmit} className="flex-1 reading-column py-10 flex flex-col">
                 {error && <div className="error-banner mb-4">{error}</div>}
 
+                {/* Banner image */}
                 <div className="flex flex-col gap-0">
                     <div className="flex items-center gap-2 py-2">
-                        <Image size={13} className="text-muted shrink-0" />
+                        <ImagePlus size={13} className="text-muted shrink-0" />
                         <input
                             type="url"
                             value={banner_image}
@@ -213,6 +372,16 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
                             placeholder="Paste a banner image URL..."
                             className="flex-1 bg-transparent border-none outline-none text-sm text-muted placeholder:text-muted/50 font-sans"
                         />
+                        {banner_image && (
+                            <button
+                                type="button"
+                                onClick={() => setBanner_image("")}
+                                aria-label="Remove banner image"
+                                className="text-muted hover:text-primary transition-colors shrink-0 p-1"
+                            >
+                                <X size={13} />
+                            </button>
+                        )}
                     </div>
                     {banner_image && (
                         <img
@@ -226,19 +395,30 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
 
                 <hr className="divider" />
 
-                <textarea
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                    placeholder="Title"
-                    required
-                    rows={2}
-                    className="w-full bg-transparent border-none outline-none heading-hero placeholder:text-muted/30 leading-tight"
-                />
+                {/* Title — auto-grows, character counter appears near limit */}
+                <div>
+                    <textarea
+                        ref={titleRef}
+                        value={title}
+                        onChange={e => setTitle(e.target.value)}
+                        placeholder="Title"
+                        required
+                        rows={1}
+                        maxLength={200}
+                        className="w-full bg-transparent border-none outline-none heading-hero placeholder:text-muted/30 leading-tight resize-none overflow-hidden"
+                    />
+                    {title.length > 160 && (
+                        <p className={`meta-text text-right ${title.length >= 200 ? "text-danger" : ""}`}>
+                            {title.length} / 200
+                        </p>
+                    )}
+                </div>
 
                 <hr className="divider" />
 
                 {isPreview ? (
-                    <div className="prose min-h-[60vh] pt-2">
+                    // Preview matches the reading layout exactly — no extra min-height
+                    <div className="prose pt-2">
                         {content.trim()
                             ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
                             : <p className="meta-text italic">Nothing to preview yet.</p>
@@ -251,12 +431,12 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
                                 <button
                                     key={item.label}
                                     type="button"
-                                    title={item.label}
+                                    title={item.hint ? `${item.label} (${item.hint})` : item.label}
                                     onClick={() => handleToolbarClick(item.label, item.action)}
-                                    className={`p-2 transition-colors rounded-sm ${
-                                        activeButtons.has(item.label)
-                                            ? 'text-primary bg-surface'
-                                            : 'text-muted hover:text-primary hover:bg-surface'
+                                    className={`p-2.5 transition-colors rounded-sm ${
+                                        flashedButtons.has(item.label) || contextualActive.has(item.label)
+                                            ? "text-accent bg-surface"
+                                            : "text-muted hover:text-primary hover:bg-surface"
                                     }`}
                                 >
                                     {item.icon}
@@ -268,14 +448,18 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
                             ref={textareaRef}
                             value={content}
                             onChange={e => setContent(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            onSelect={checkContext}
+                            onClick={checkContext}
+                            onKeyUp={checkContext}
                             placeholder="Begin your narrative here..."
                             required
-                            className="w-full bg-transparent border-none outline-none resize-none body-text placeholder:text-muted/30 p-5 min-h-[60vh]"
+                            autoCorrect="off"
+                            autoCapitalize="off"
+                            className="w-full bg-transparent border-none outline-none resize-none body-text placeholder:text-muted/30 p-5 min-h-[40vh]"
                         />
                     </div>
                 )}
-
-                <p className="meta-text sm:hidden mt-2">{wordCount} words</p>
             </form>
         </motion.div>
     )
