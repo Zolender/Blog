@@ -58,7 +58,15 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
     useEffect(() => {
         const saved = localStorage.getItem(draftKey)
         if (saved) {
-            showToast("Draft restored", "success")
+            showToast("Draft restored", "success", {
+                label: "Discard",
+                onClick: ()=>{
+                    localStorage.removeItem(draftKey)
+                    setTitle(initialValues?.title ?? "")
+                    setContent(initialValues?.content ?? "")
+                    setBanner_image(initialValues?.banner_image ?? "")
+                }
+            })
         }
     }, [])
 

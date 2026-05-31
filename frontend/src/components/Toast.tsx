@@ -8,11 +8,13 @@ interface ToastItem {
     id: number
     message: string
     variant: ToastVariant
+    action? : {label: string; onClick: ()=> void}
 }
 
 interface ToastContextValue {
-    showToast: (message:string, variant?: ToastVariant)=> void
+    showToast: (message:string, variant?: ToastVariant, action?: {label: string; onClick: ()=> void}) => void
 }
+
 
 const ToastContext = createContext<ToastContextValue | null>(null)
 
@@ -23,9 +25,9 @@ export const ToastProvider = ({children}: {children: React.ReactNode}) => {
     const dismiss = useCallback((id: number)=> {
         setToasts(prev => prev.filter(t => t.id !== id))
     },[])
-    const showToast = useCallback((message:string, variant: ToastVariant = "success")=>{
+    const showToast = useCallback((message:string, variant: ToastVariant = "success", action?: {label: string; onClick: ()=> void})=>{
         const id = ++counter.current
-        setToasts(prev => [...prev, {id, message, variant}])
+        setToasts(prev => [...prev, {id, message, variant, action}])
         setTimeout(()=> dismiss(id), 3000)
     }, [dismiss])
     
@@ -49,6 +51,15 @@ export const ToastProvider = ({children}: {children: React.ReactNode}) => {
                         <p className={`text-sm font-sans leading-snug ${toast.variant === 'success'? "text-primary": "text-danger"}`}>
                             {toast.message}
                         </p>
+                        {toast.action && (
+                            <button
+                                type="button"
+                                onClick={()=>{toast.action!.onClick(); dismiss(toast.id)}}
+                                className="font-sans font-medium text-xs underline underline-offset-2 shrink-0 mt-0.5"
+                            >
+                                {toast.action.label}
+                            </button>
+                        )}
                         <button
                             type="button"
                             aria-label="Dismiss notification"
