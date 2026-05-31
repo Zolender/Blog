@@ -110,6 +110,49 @@ export const getMe = async (req: authRequest, res: Response, next: NextFunction)
     }
 }
 
+export const updateMe = async (req: authRequest, res: Response, next: NextFunction) => {
+    try {
+        const schema = z.object({
+            bio:         z.string().max(300).optional(),
+            profile_pic: z.url().nullable().optional(),
+        })
+
+        const parsed = schema.safeParse(req.body)
+        if (!parsed.success) {
+            const errors = parsed.error.issues.map(({ path, message }) => ({ path, message }))
+            res.status(400).json({ message: "Invalid input", errors })
+            return
+        }
+
+        const fields: string[] = []
+        const values: unknown[] = []
+
+        if ("bio" in parsed.data) {
+            fields.push(`bio = $${values.length + 1}`)
+            values.push(parsed.data.bio ?? null)
+        }
+        if ("profile_pic" in parsed.data) {
+            fields.push(`profile_pic = $${values.length + 1}`)
+            values.push(parsed.data.profile_pic ?? null)
+        }
+
+        if (fields.length === 0) {
+            res.status(400).json({ message: "No fields to update" })
+            return
+        }
+
+        values.push(req.user!.id)
+        const result = await pool.query(
+            `UPDATE users SET ${fields.join(", ")} WHERE id = $${values.length} RETURNING id, username, email, role, bio, profile_pic, created_at`,
+            values
+        )
+
+        res.status(200).json({ user: result.rows[0] })
+    } catch (err) {
+        next(err)
+    }
+}
+
 export const forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { email } = req.body

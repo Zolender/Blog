@@ -5,6 +5,7 @@ import healthRoute from "./routes/healthRoute.js"
 import authRoutes from "./routes/authRoutes.js"
 import postRoutes from "./routes/postRoutes.js"
 import adminRoutes from "./routes/adminRoutes.js"
+import userRoutes from "./routes/userRoutes.js"
 import helmet from "helmet"
 import rateLimit from "express-rate-limit"
 
@@ -53,6 +54,7 @@ app.use("/auth/me", meLimiter)
 app.use("/auth", strictLimiter, authRoutes)
 app.use("/posts", generalLimiter, postRoutes)
 app.use("/admin", generalLimiter, adminRoutes)
+app.use("/users", generalLimiter, userRoutes)
 
 app.use(errorHandler)
 

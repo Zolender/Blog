@@ -7,23 +7,11 @@ import { postsApi } from '../api/posts'
 import APostCard from '../components/APostCard'
 import SkeletonCard from '../components/SkeletonCard'
 import PullQuote from '../components/PullQuote'
-import { getAvatarColor, formatDate, stripMarkdown } from '../utils/formatting'
+import { getAvatarColor, formatDate, stripMarkdown, getPageNumbers } from '../utils/formatting'
 
 const pageVariants = {
   hidden:  { opacity: 0, y: 10 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-}
-
-const getPageNumbers = (current: number, total: number): (number | '...')[] => {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
-  const pages: (number | '...')[] = [1]
-  if (current > 3) pages.push('...')
-  for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
-    pages.push(i)
-  }
-  if (current < total - 2) pages.push('...')
-  pages.push(total)
-  return pages
 }
 
 const FeedPage = () => {

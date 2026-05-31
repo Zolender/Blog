@@ -1,5 +1,6 @@
 import { ArrowLeft, Bold, Code, Code2, Edit2, Eye, Heading2, Image, Italic, Link as LinkIcon, List, Minus, Quote, StrikethroughIcon } from "lucide-react"
 import { useCallback, useEffect, useRef, useState, type SubmitEvent } from "react"
+import { motion } from "framer-motion"
 import { useNavigate } from "react-router"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -156,7 +157,12 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
     ]
 
     return (
-        <div className="min-h-screen flex flex-col">
+        <motion.div
+            className="min-h-screen flex flex-col"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+        >
 
             <header className="sticky top-0 z-10 bg-base border-b border-border">
                 <div className="page-wrapper h-14 flex items-center justify-between gap-4">
@@ -271,7 +277,7 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
 
                 <p className="meta-text sm:hidden mt-2">{wordCount} words</p>
             </form>
-        </div>
+        </motion.div>
     )
 }
 

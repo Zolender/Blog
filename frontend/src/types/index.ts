@@ -41,6 +41,14 @@ export interface PaginationMeta {
     hasPrevPage: boolean
 }
 
+export interface PublicUser {
+    id: number
+    username: string
+    bio: string | null
+    profile_pic: string | null
+    created_at: string
+}
+
 export interface AuthState {
     user: User | null
     token: string | null
