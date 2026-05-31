@@ -53,16 +53,17 @@ const FeedPage = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  if (isLoading) {
+  if (isLoading && posts.length === 0) {
     return (
       <div className="page-wrapper py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          showSlowMessage && (
-            <p className="text-center meta-text mt-8">
-                Waking up the server, this may take a moment...
-            </p>
-        )
+          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
+        {showSlowMessage && (
+          <p className="text-center meta-text mt-8">
+            Waking up the server, this may take a moment...
+          </p>
+        )}
       </div>
     )
   }
