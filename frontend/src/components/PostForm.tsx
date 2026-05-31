@@ -103,11 +103,21 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
 
     const handleSubmit = async (e: SubmitEvent) => {
         e.preventDefault()
+        if (!title.trim()) {
+            showToast("Add a title before publishing", "error")
+            titleRef.current?.focus()
+            return
+        }
+        if (!content.trim()) {
+            showToast("Post content can't be empty", "error")
+            textareaRef.current?.focus()
+            return
+        }
         try {
             await onSubmit({ title, content, banner_image })
-            localStorage.removeItem(draftKey)   // only clear draft on success
+            localStorage.removeItem(draftKey)
         } catch {
-            // parent already displays the error; we just don't clear the draft
+            // parent already displays the error; don't clear the draft
         }
     }
 
@@ -144,6 +154,8 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
         const checkWrap = (marker: string, label: string) => {
             const last = before.lastIndexOf(marker)
             if (last === -1) return
+            // Guard: a single * must not be part of ** (avoids italic false-positive inside bold)
+            if (marker === "*" && last > 0 && before[last - 1] === "*") return
             const between = before.slice(last + marker.length)
             if (between.includes(marker) || between.includes("\n")) return
             if (after.indexOf(marker) !== -1) active.add(label)
@@ -154,6 +166,14 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
         if (!active.has("Bold")) checkWrap("*", "Italic")
         checkWrap("`",  "Inline code")
         checkWrap("~~", "StrikeThrough")
+
+        // Link detection: cursor is between [ and ](...)
+        const lastBracket = before.lastIndexOf("[")
+        if (lastBracket !== -1) {
+            const betweenBrackets = before.slice(lastBracket + 1)
+            const noNested = !betweenBrackets.includes("[") && !betweenBrackets.includes("]") && !betweenBrackets.includes("\n")
+            if (noNested && /^\]\([^)]*\)/.test(after)) active.add("Link")
+        }
 
         setContextualActive(active)
     }, [content])
@@ -183,15 +203,23 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
         }
     }, [content])
 
-    // Toggle inline-wrap markers on/off (bold, italic, code, etc.)
-    const toggleWrap = useCallback((before: string, after: string, defaultText: string) => {
+    // Toggle inline-wrap markers on/off.
+    // multiline — skip the \n guard (needed for fenced code blocks)
+    // closeRegex — match a flexible closing pattern (e.g. ]\([^)]*\) for real link URLs)
+    const toggleWrap = useCallback((
+        before: string,
+        after: string,
+        defaultText: string,
+        multiline = false,
+        closeRegex?: RegExp
+    ) => {
         const el = textareaRef.current
         if (!el) return
         const selStart = el.selectionStart
         const selEnd   = el.selectionEnd
         const selected = content.slice(selStart, selEnd)
 
-        // If no closing marker, treat as pure insertion (e.g. divider — handled in toolbarItems directly)
+        // No closing marker — pure insertion
         if (!after) {
             const next = content.slice(0, selStart) + before + content.slice(selEnd)
             setContent(next)
@@ -202,12 +230,17 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
             return
         }
 
-        // Remove: selection is surrounded by markers
+        // Remove: selection already surrounded by markers
         if (selStart >= before.length) {
             const hasBefore = content.slice(selStart - before.length, selStart) === before
-            const hasAfter  = content.slice(selEnd, selEnd + after.length) === after
+            const hasAfter  = closeRegex
+                ? closeRegex.test(content.slice(selEnd))
+                : content.slice(selEnd, selEnd + after.length) === after
             if (hasBefore && hasAfter) {
-                const next = content.slice(0, selStart - before.length) + selected + content.slice(selEnd + after.length)
+                const closeLen = closeRegex
+                    ? (closeRegex.exec(content.slice(selEnd))?.[0].length ?? after.length)
+                    : after.length
+                const next = content.slice(0, selStart - before.length) + selected + content.slice(selEnd + closeLen)
                 setContent(next)
                 requestAnimationFrame(() => {
                     el.focus()
@@ -223,12 +256,14 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
             const textAfter  = content.slice(selStart)
             const lastMark   = textBefore.lastIndexOf(before)
             if (lastMark !== -1) {
-                const between  = textBefore.slice(lastMark + before.length)
-                const noClose  = !between.includes(after) && !between.includes("\n")
-                const firstClose = textAfter.indexOf(after)
+                const between = textBefore.slice(lastMark + before.length)
+                const noClose = !between.includes(after) && (multiline || !between.includes("\n"))
+                const match   = closeRegex ? closeRegex.exec(textAfter) : null
+                const firstClose = closeRegex ? (match?.index ?? -1) : textAfter.indexOf(after)
+                const closeLen   = closeRegex ? (match?.[0].length ?? 0) : after.length
                 if (noClose && firstClose !== -1) {
                     const inner = between + textAfter.slice(0, firstClose)
-                    const next  = content.slice(0, lastMark) + inner + content.slice(selStart + firstClose + after.length)
+                    const next  = content.slice(0, lastMark) + inner + content.slice(selStart + firstClose + closeLen)
                     setContent(next)
                     requestAnimationFrame(() => {
                         el.focus()
@@ -240,7 +275,7 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
             }
         }
 
-        // Default: wrap (or insert with placeholder)
+        // Default: wrap with selection or placeholder
         const insert = selected || defaultText
         const next   = content.slice(0, selStart) + before + insert + after + content.slice(selEnd)
         setContent(next)
@@ -267,22 +302,22 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
         const key = e.key.toLowerCase()
 
         if (e.shiftKey) {
-            if (key === "c") { e.preventDefault(); toggleWrap("\n```\n", "\n```\n", "code here"); flashButton("Code Block") }
+            if (key === "c") { e.preventDefault(); toggleWrap("\n```\n", "\n```\n", "code here", true); flashButton("Code Block") }
             return
         }
 
         switch (key) {
-            case "b": e.preventDefault(); toggleWrap("**", "**", "bold text");    flashButton("Bold");        break
-            case "i": e.preventDefault(); toggleWrap("*",  "*",  "italic text");  flashButton("Italic");      break
-            case "k": e.preventDefault(); toggleWrap("[",  "](url)", "link text");flashButton("Link");        break
-            case "e": e.preventDefault(); toggleWrap("`",  "`",  "code");         flashButton("Inline code"); break
+            case "b": e.preventDefault(); toggleWrap("**", "**", "bold text");                              flashButton("Bold");        break
+            case "i": e.preventDefault(); toggleWrap("*",  "*",  "italic text");                            flashButton("Italic");      break
+            case "k": e.preventDefault(); toggleWrap("[",  "](url)", "link text", false, /^\]\([^)]*\)/);  flashButton("Link");        break
+            case "e": e.preventDefault(); toggleWrap("`",  "`",  "code");                                   flashButton("Inline code"); break
         }
     }, [toggleWrap, flashButton])
 
-    const handleToolbarClick = (label: string, action: () => void) => {
+    const handleToolbarClick = useCallback((label: string, action: () => void) => {
         action()
         flashButton(label)
-    }
+    }, [flashButton])
 
     const toolbarItems = [
         { icon: <Bold size={14} />,             label: "Bold",        hint: "Ctrl+B",       action: () => toggleWrap("**", "**", "bold text") },
@@ -305,10 +340,10 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
                 requestAnimationFrame(() => { el.focus(); el.setSelectionRange(pos + divider.length, pos + divider.length) })
             }
         },
-        { icon: <StrikethroughIcon size={14} />, label: "StrikeThrough", hint: "",           action: () => toggleWrap("~~", "~~", "strikethrough text") },
-        { icon: <Code2 size={14} />,             label: "Code Block",    hint: "Ctrl+Shift+C", action: () => toggleWrap("\n```\n", "\n```\n", "code here") },
-        { icon: <LinkIcon size={14} />,          label: "Link",          hint: "Ctrl+K",     action: () => toggleWrap("[", "](url)", "link text") },
-        { icon: <Image size={14} />,             label: "Image",         hint: "",           action: () => toggleWrap("![", "](url)", "alt text") },
+        { icon: <StrikethroughIcon size={14} />, label: "StrikeThrough", hint: "",             action: () => toggleWrap("~~", "~~", "strikethrough text") },
+        { icon: <Code2 size={14} />,             label: "Code Block",    hint: "Ctrl+Shift+C", action: () => toggleWrap("\n```\n", "\n```\n", "code here", true) },
+        { icon: <LinkIcon size={14} />,          label: "Link",          hint: "Ctrl+K",       action: () => toggleWrap("[", "](url)", "link text", false, /^\]\([^)]*\)/) },
+        { icon: <Image size={14} />,             label: "Image",         hint: "",             action: () => toggleWrap("![", "](url)", "alt text",  false, /^\]\([^)]*\)/) },
     ]
 
     return (
@@ -402,7 +437,6 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
                         value={title}
                         onChange={e => setTitle(e.target.value)}
                         placeholder="Title"
-                        required
                         rows={1}
                         maxLength={200}
                         className="w-full bg-transparent border-none outline-none heading-hero placeholder:text-muted/30 leading-tight resize-none overflow-hidden"
@@ -453,7 +487,6 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
                             onClick={checkContext}
                             onKeyUp={checkContext}
                             placeholder="Begin your narrative here..."
-                            required
                             autoCorrect="off"
                             autoCapitalize="off"
                             className="w-full bg-transparent border-none outline-none resize-none body-text placeholder:text-muted/30 p-5 min-h-[40vh]"
