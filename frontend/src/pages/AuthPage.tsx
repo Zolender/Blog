@@ -48,6 +48,7 @@ const AuthPage = () => {
         setError(null)
         setFields({ username: "", email: "", password: "" })
         document.title = `${next === "login" ? "Sign in" : "Register"} — Z-Tales`
+        navigate(next === "login" ? "/login" : "/register", { replace: true })
     }
 
     const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {

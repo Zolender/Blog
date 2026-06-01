@@ -16,24 +16,29 @@ const removeMetaTag = (attr: 'property' | 'name', key: string) => {
     document.querySelector(`meta[${attr}="${key}"]`)?.remove()
 }
 
+// Drop a default og-default.png into /public to activate the fallback
+const SITE_OG_IMAGE = '/og-default.png'
+
 export const setPostMeta = (post: {
     title: string
     description: string
     image: string | null
     url: string
 }) => {
+    const ogImage = post.image || SITE_OG_IMAGE
+
     // for common social media platforms just Open Graph
     setMetaTag('property', 'og:type', 'article')
     setMetaTag('property', 'og:title', post.title)
     setMetaTag('property', 'og:description', post.description)
-    setMetaTag('property', 'og:url',post.url)
-    if (post.image) setMetaTag('property', 'og:image', post.image)
+    setMetaTag('property', 'og:url', post.url)
+    setMetaTag('property', 'og:image', ogImage)
 
     // for Twitter
-    setMetaTag('name', 'twitter:card','summary_large_image')
+    setMetaTag('name', 'twitter:card', 'summary_large_image')
     setMetaTag('name', 'twitter:title', post.title)
     setMetaTag('name', 'twitter:description', post.description)
-    if (post.image) setMetaTag('name', 'twitter:image', post.image)
+    setMetaTag('name', 'twitter:image', ogImage)
 }
 
 export const clearPostMeta = () => {

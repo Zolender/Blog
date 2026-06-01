@@ -19,6 +19,12 @@ import ProfilePage from "./pages/ProfilePage"
 import SettingsPage from "./pages/SettingsPage"
 import { MotionConfig } from "framer-motion"
 import SkeletonCard from "./components/SkeletonCard"
+import SkeletonEditor from "./components/SkeletonEditor"
+
+const isWriterRoute = () => {
+    const p = window.location.pathname
+    return p === "/posts/new" || /^\/posts\/\d+\/edit$/.test(p)
+}
 
 const App = () => {
     const dispatch    = useAppDispatch()
@@ -26,17 +32,20 @@ const App = () => {
 
     useEffect(() => { dispatch(rehydrateAuth()) }, [dispatch])
 
-    if (isLoading) return (
-        <div className="min-h-screen bg-base">
-            <div className="h-16 bg-white border-b border-border" />
-            <div className="page-wrapper py-12">
-                <div className="skeleton w-full h-72 mb-10" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+    if (isLoading) {
+        if (isWriterRoute()) return <SkeletonEditor />
+        return (
+            <div className="min-h-screen bg-base">
+                <div className="h-16 bg-white border-b border-border" />
+                <div className="page-wrapper py-12">
+                    <div className="skeleton w-full h-72 mb-10" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+                    </div>
                 </div>
             </div>
-        </div>
-    )
+        )
+    }
 
     return (
         <MotionConfig reducedMotion="user">

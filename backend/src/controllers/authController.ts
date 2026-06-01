@@ -252,8 +252,8 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
             [password_hashed, resetRecord.user_id]
         )
 
-        // delete the token so it can't be reused
-        await pool.query("DELETE FROM password_reset_tokens WHERE token = $1", [token])
+        // delete the used token, and sweep any other expired tokens while we're here
+        await pool.query("DELETE FROM password_reset_tokens WHERE token = $1 OR expires_at < NOW()", [token])
 
         res.status(200).json({ message: "Password updated successfully" })
     } catch (err) {

@@ -71,6 +71,18 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
         }
     }, [])
 
+    // Warn before tab close when the form has unsaved changes
+    useEffect(() => {
+        const isDirty =
+            title   !== (initialValues?.title        ?? "") ||
+            content !== (initialValues?.content      ?? "") ||
+            banner_image !== (initialValues?.banner_image ?? "")
+        if (!isDirty) return
+        const handler = (e: BeforeUnloadEvent) => { e.preventDefault() }
+        window.addEventListener("beforeunload", handler)
+        return () => window.removeEventListener("beforeunload", handler)
+    }, [title, content, banner_image, initialValues])
+
     // Debounced autosave — skip the very first render to avoid writing back the same draft
     useEffect(() => {
         if (isFirstRender.current) { isFirstRender.current = false; return }

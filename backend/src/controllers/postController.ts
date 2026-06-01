@@ -7,7 +7,7 @@ import { Request, Response, NextFunction } from "express"
 const postSchema = z.object({
     title : z.string().min(3).max(255),
     content : z.string().min(10),
-    banner_image : z.url().optional()
+    banner_image : z.union([z.url(), z.literal("")]).optional()
 })
 
 
@@ -29,7 +29,7 @@ export const getAllPosts = async (req: Request, res: Response, next: NextFunctio
                     users.username AS author_username,
                     users.profile_pic AS author_profile_pic,
                     COUNT(DISTINCT likes.user_id) AS like_count,
-                    COUNT(DISTINCT CASE WHEN comments.parent_id IS NULL THEN comments.id END) AS comment_count
+                    COUNT(DISTINCT comments.id) AS comment_count
                 FROM posts
                 JOIN users ON posts.author_id = users.id
                 LEFT JOIN likes ON posts.id = likes.post_id
@@ -139,7 +139,7 @@ export const createPost = async (req: authRequest, res: Response, next: NextFunc
             INSERT INTO posts (author_id, title, content, banner_image)
             VALUES ($1, $2, $3, $4)
             RETURNING *
-        `, [author_id, title, content, banner_image ?? null])
+        `, [author_id, title, content, banner_image || null])
 
         res.status(201).json({ message: "Post created", post: result.rows[0] })
     } catch (err) {
@@ -181,7 +181,7 @@ export const updatePost = async (req: authRequest, res: Response, next: NextFunc
 
         if(title !== undefined) { fields.push(`title = $${values.length + 1}`); values.push(title)}
         if(content !== undefined) { fields.push(`content = $${values.length + 1}`); values.push(content)}
-        if('banner_image' in parsed.data) { fields.push(`banner_image = $${values.length + 1}`); values.push(banner_image ?? null)}
+        if('banner_image' in parsed.data) { fields.push(`banner_image = $${values.length + 1}`); values.push(banner_image || null)}
 
         values.push(id)    
         const updated = await pool.query(`UPDATE posts SET ${fields.join(', ')} WHERE id = $${values.length} RETURNING *`, values)
