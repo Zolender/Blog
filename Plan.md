@@ -342,6 +342,13 @@ Goals: every username on the site becomes a link to a real page; users have an i
 - [ ] Settings link in Navbar — visible to logged-in users next to the logout button
 - [ ] `"Edited"` badge on `PostPage` — show `updated_at` timestamp when a post has been modified
 
+**Profile page dual-view (own vs. visitor):**
+- [ ] Detect own profile: compare `currentUser?.username === username` from Redux auth state
+- [ ] Own profile view: "Edit profile" button in header linking to `/settings`; personalized empty state with a "Write your first post →" CTA linking to `/posts/new`
+- [ ] Visitor profile view: clean read-only — no edit or write actions exposed
+- [ ] Enhanced profile header: larger avatar (`w-20 h-20`), surface-bg card with border, stats row (post count + join date) styled as `meta-text`
+- [ ] Updated loading skeleton to match the enhanced header layout (larger circle + wider lines)
+
 ### Phase 16: Avatar File Upload
 Goals: let users upload an actual image instead of pasting a URL.
 

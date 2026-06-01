@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react"
 import { useParams, Link } from "react-router"
 import { motion } from "framer-motion"
+import { Settings2, PenLine } from "lucide-react"
 import type { PublicUser, Post, PaginationMeta } from "../types"
 import { usersApi } from "../api/users"
+import { useAppSelector } from "../app/hooks"
 import APostCard from "../components/APostCard"
 import SkeletonCard from "../components/SkeletonCard"
 import { formatDate, getAvatarColor, getPageNumbers } from "../utils/formatting"
@@ -13,16 +15,19 @@ const pageVariants = {
 }
 
 const ProfilePage = () => {
-    const { username } = useParams()
-    const [profile, setProfile]       = useState<PublicUser | null>(null)
-    const [posts, setPosts]           = useState<Post[]>([])
-    const [pagination, setPagination] = useState<PaginationMeta | null>(null)
+    const { username }  = useParams()
+    const currentUser   = useAppSelector(state => state.auth.user)
+    const isOwnProfile  = currentUser?.username === username
+
+    const [profile, setProfile]         = useState<PublicUser | null>(null)
+    const [posts, setPosts]             = useState<Post[]>([])
+    const [pagination, setPagination]   = useState<PaginationMeta | null>(null)
     const [currentPage, setCurrentPage] = useState(1)
-    const [isLoading, setIsLoading]   = useState(true)
-    const [error, setError]           = useState<string | null>(null)
+    const [isLoading, setIsLoading]     = useState(true)
+    const [error, setError]             = useState<string | null>(null)
 
     useEffect(() => {
-        const fetch = async () => {
+        const load = async () => {
             setIsLoading(true)
             setError(null)
             try {
@@ -36,7 +41,7 @@ const ProfilePage = () => {
                 setIsLoading(false)
             }
         }
-        fetch()
+        load()
     }, [username, currentPage])
 
     useEffect(() => {
@@ -50,16 +55,24 @@ const ProfilePage = () => {
     }
 
     if (isLoading) return (
-        <div className="page-wrapper py-12">
-            <div className="flex items-center gap-5 mb-10">
-                <div className="skeleton w-16 h-16 rounded-full" />
-                <div className="flex flex-col gap-2">
-                    <div className="skeleton h-5 w-32" />
-                    <div className="skeleton h-3 w-48" />
+        <div>
+            <div className="bg-surface border-b border-border">
+                <div className="page-wrapper py-10">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-5">
+                        <div className="skeleton w-20 h-20 rounded-full shrink-0" />
+                        <div className="flex flex-col gap-2.5 mt-1 flex-1">
+                            <div className="skeleton h-6 w-44" />
+                            <div className="skeleton h-3.5 w-80" />
+                            <div className="skeleton h-3.5 w-56" />
+                            <div className="skeleton h-3 w-40 mt-1" />
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+            <div className="page-wrapper py-12">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+                </div>
             </div>
         </div>
     )
@@ -73,48 +86,106 @@ const ProfilePage = () => {
         </div>
     )
 
+    const postCount = pagination?.totalPosts ?? 0
+
     return (
         <motion.div variants={pageVariants} initial="hidden" animate="visible">
-            <div className="page-wrapper py-12">
 
-                <div className="flex items-start gap-5 mb-10">
-                    <div className={`w-16 h-16 rounded-full flex items-center justify-center shrink-0 ${getAvatarColor(profile.username)}`}>
-                        {profile.profile_pic ? (
-                            <img
-                                src={profile.profile_pic}
-                                alt={profile.username}
-                                className="w-full h-full rounded-full object-cover"
-                            />
-                        ) : (
-                            <span className="text-white font-sans text-2xl font-semibold">
-                                {profile.username.charAt(0).toUpperCase()}
-                            </span>
-                        )}
-                    </div>
+            {/* ── Profile header ─────────────────────────────────── */}
+            <div className="bg-surface border-b border-border">
+                <div className="page-wrapper py-10">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-5">
 
-                    <div className="flex flex-col gap-1">
-                        <h1 className="heading-section">{profile.username}</h1>
-                        {profile.bio && (
-                            <p className="font-sans text-sm text-primary leading-relaxed max-w-lg">
-                                {profile.bio}
+                        {/* Avatar */}
+                        <div className={`w-20 h-20 rounded-full flex items-center justify-center shrink-0 ${getAvatarColor(profile.username)}`}>
+                            {profile.profile_pic ? (
+                                <img
+                                    src={profile.profile_pic}
+                                    alt={profile.username}
+                                    className="w-full h-full rounded-full object-cover"
+                                />
+                            ) : (
+                                <span className="text-white font-sans text-3xl font-semibold select-none">
+                                    {profile.username.charAt(0).toUpperCase()}
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Identity */}
+                        <div className="flex-1 min-w-0">
+
+                            {/* Name row + edit action */}
+                            <div className="flex items-start justify-between gap-4">
+                                <h1 className="heading-section">{profile.username}</h1>
+                                {isOwnProfile && (
+                                    <Link
+                                        to="/settings"
+                                        className="btn-ghost inline-flex items-center gap-1.5 px-3 py-1.5 text-xs shrink-0"
+                                    >
+                                        <Settings2 size={12} />
+                                        Edit profile
+                                    </Link>
+                                )}
+                            </div>
+
+                            {/* Bio */}
+                            {profile.bio ? (
+                                <p className="font-sans text-sm text-primary leading-relaxed max-w-xl mt-2">
+                                    {profile.bio}
+                                </p>
+                            ) : isOwnProfile ? (
+                                <p className="font-sans text-sm text-muted leading-relaxed mt-2 italic">
+                                    No bio yet.{" "}
+                                    <Link
+                                        to="/settings"
+                                        className="underline underline-offset-2 hover:text-primary transition-colors duration-150 cursor-pointer"
+                                    >
+                                        Add one in settings
+                                    </Link>
+                                </p>
+                            ) : null}
+
+                            {/* Stats */}
+                            <p className="meta-text mt-3">
+                                {postCount} {postCount === 1 ? "post" : "posts"}
+                                <span className="mx-2 opacity-40">·</span>
+                                Member since {formatDate(profile.created_at, { month: "long", year: "numeric" })}
                             </p>
-                        )}
-                        <p className="meta-text mt-1">
-                            {pagination?.totalPosts ?? 0} {pagination?.totalPosts === 1 ? "post" : "posts"}
-                            <span className="mx-2">·</span>
-                            Member since {formatDate(profile.created_at, { month: "long", year: "numeric" })}
-                        </p>
+
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <hr className="divider mb-10" />
+            {/* ── Posts section ──────────────────────────────────── */}
+            <div className="page-wrapper py-12">
 
                 {posts.length === 0 ? (
                     <div className="state-container">
-                        <p className="font-serif text-xl text-primary mb-2">No posts yet</p>
-                        <p className="meta-text">
-                            {profile.username} hasn't written anything here.
-                        </p>
+                        {isOwnProfile ? (
+                            <>
+                                <p className="font-serif text-xl text-primary mb-2">
+                                    Your page is ready.
+                                </p>
+                                <p className="meta-text mb-6 max-w-xs text-center">
+                                    You haven't published anything yet. Write your first post and let people find you here.
+                                </p>
+                                <Link
+                                    to="/posts/new"
+                                    className="btn-primary inline-flex items-center gap-2"
+                                >
+                                    <PenLine size={13} />
+                                    Write your first post
+                                </Link>
+                            </>
+                        ) : (
+                            <>
+                                <p className="font-serif text-xl text-primary mb-2">Nothing here yet</p>
+                                <p className="meta-text">
+                                    {profile.username} hasn't written anything here.
+                                </p>
+                            </>
+                        )}
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -127,7 +198,7 @@ const ProfilePage = () => {
                         <button
                             onClick={() => handlePageChange(currentPage - 1)}
                             disabled={!pagination.hasPrevPage}
-                            className="btn-ghost px-4 py-1.5 text-xs"
+                            className="btn-ghost px-4 py-1.5 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Previous
                         </button>
@@ -138,7 +209,7 @@ const ProfilePage = () => {
                             ) : (
                                 <button
                                     key={page}
-                                    onClick={() => handlePageChange(page)}
+                                    onClick={() => handlePageChange(page as number)}
                                     className={`w-8 h-8 font-sans text-xs border transition-colors duration-200 cursor-pointer
                                         ${page === currentPage
                                             ? "bg-accent text-white border-accent"
@@ -153,7 +224,7 @@ const ProfilePage = () => {
                         <button
                             onClick={() => handlePageChange(currentPage + 1)}
                             disabled={!pagination.hasNextPage}
-                            className="btn-ghost px-4 py-1.5 text-xs"
+                            className="btn-ghost px-4 py-1.5 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Next
                         </button>
