@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react"
+import { Link, useNavigate } from "react-router"
 import { motion } from "framer-motion"
+import { ArrowLeft, ExternalLink } from "lucide-react"
 import { useAppDispatch, useAppSelector } from "../app/hooks"
 import { setCredentials } from "../features/auth/authSlice"
 import { usersApi } from "../api/users"
@@ -12,6 +14,7 @@ const pageVariants = {
 
 const SettingsPage = () => {
     const dispatch      = useAppDispatch()
+    const navigate      = useNavigate()
     const { user }      = useAppSelector(state => state.auth)
     const { showToast } = useToast()
 
@@ -47,10 +50,20 @@ const SettingsPage = () => {
     return (
         <motion.div variants={pageVariants} initial="hidden" animate="visible">
             <div className="reading-column py-12">
+
+                {/* Back navigation */}
+                <button
+                    onClick={() => navigate(-1)}
+                    className="btn-ghost inline-flex items-center gap-1.5 px-3 py-1.5 text-xs mb-8"
+                >
+                    <ArrowLeft size={13} />
+                    Back
+                </button>
+
                 <h1 className="heading-section mb-8">Settings</h1>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-                    {error && <div className="error-banner">{error}</div>}
+                    {error && <div className="error-banner" role="alert">{error}</div>}
 
                     <div className="flex flex-col gap-1.5">
                         <label className="input-label" htmlFor="bio">Bio</label>
@@ -89,14 +102,26 @@ const SettingsPage = () => {
                     </div>
 
                     <div className="flex items-center justify-between pt-2">
-                        <p className="meta-text">
-                            Signed in as <span className="text-primary font-medium">{user?.username}</span>
-                        </p>
+                        <div className="flex flex-col gap-1">
+                            <p className="meta-text">
+                                Signed in as <span className="text-primary font-medium">{user?.username}</span>
+                            </p>
+                            {user?.username && (
+                                <Link
+                                    to={`/users/${user.username}`}
+                                    className="meta-text inline-flex items-center gap-1 hover:text-primary transition-colors duration-150"
+                                >
+                                    <ExternalLink size={11} />
+                                    View your profile
+                                </Link>
+                            )}
+                        </div>
                         <button type="submit" disabled={isLoading} className="btn-primary">
                             {isLoading ? "Saving..." : "Save changes"}
                         </button>
                     </div>
                 </form>
+
             </div>
         </motion.div>
     )

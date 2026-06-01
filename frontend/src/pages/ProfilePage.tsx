@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useParams, Link } from "react-router"
 import { motion } from "framer-motion"
 import { Settings2, PenLine } from "lucide-react"
@@ -25,6 +25,21 @@ const ProfilePage = () => {
     const [currentPage, setCurrentPage] = useState(1)
     const [isLoading, setIsLoading]     = useState(true)
     const [error, setError]             = useState<string | null>(null)
+    // Flaw 3: track broken avatar URL so we can fall back to the initial letter
+    const [avatarError, setAvatarError] = useState(false)
+
+    // Flaw 4: reset page and clear profile when navigating to a different user
+    const prevUsernameRef = useRef(username)
+    useEffect(() => {
+        if (prevUsernameRef.current !== username) {
+            prevUsernameRef.current = username
+            setCurrentPage(1)
+            setProfile(null)
+            setPosts([])
+            setPagination(null)
+            setAvatarError(false)
+        }
+    }, [username])
 
     useEffect(() => {
         const load = async () => {
@@ -54,7 +69,8 @@ const ProfilePage = () => {
         window.scrollTo({ top: 0, behavior: "smooth" })
     }
 
-    if (isLoading) return (
+    // Full-page skeleton: only on first load or when switching to a new profile
+    if (isLoading && !profile) return (
         <div>
             <div className="bg-surface border-b border-border">
                 <div className="page-wrapper py-10">
@@ -98,11 +114,12 @@ const ProfilePage = () => {
 
                         {/* Avatar */}
                         <div className={`w-20 h-20 rounded-full flex items-center justify-center shrink-0 ${getAvatarColor(profile.username)}`}>
-                            {profile.profile_pic ? (
+                            {profile.profile_pic && !avatarError ? (
                                 <img
                                     src={profile.profile_pic}
                                     alt={profile.username}
                                     className="w-full h-full rounded-full object-cover"
+                                    onError={() => setAvatarError(true)}
                                 />
                             ) : (
                                 <span className="text-white font-sans text-3xl font-semibold select-none">
@@ -158,9 +175,14 @@ const ProfilePage = () => {
             </div>
 
             {/* ── Posts section ──────────────────────────────────── */}
+            {/* Flaw 5: only skeleton the grid when paginating — header stays visible */}
             <div className="page-wrapper py-12">
 
-                {posts.length === 0 ? (
+                {isLoading ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
+                    </div>
+                ) : posts.length === 0 ? (
                     <div className="state-container">
                         {isOwnProfile ? (
                             <>
@@ -193,11 +215,14 @@ const ProfilePage = () => {
                     </div>
                 )}
 
+                {/* Flaw 5 (aria): disabled buttons get aria-disabled + tabIndex so keyboard users can't activate them */}
                 {pagination && pagination.totalPages > 1 && (
                     <div className="flex items-center justify-center gap-2 mt-12">
                         <button
                             onClick={() => handlePageChange(currentPage - 1)}
                             disabled={!pagination.hasPrevPage}
+                            aria-disabled={!pagination.hasPrevPage}
+                            tabIndex={!pagination.hasPrevPage ? -1 : undefined}
                             className="btn-ghost px-4 py-1.5 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Previous
@@ -210,6 +235,7 @@ const ProfilePage = () => {
                                 <button
                                     key={page}
                                     onClick={() => handlePageChange(page as number)}
+                                    aria-current={page === currentPage ? "page" : undefined}
                                     className={`w-8 h-8 font-sans text-xs border transition-colors duration-200 cursor-pointer
                                         ${page === currentPage
                                             ? "bg-accent text-white border-accent"
@@ -224,6 +250,8 @@ const ProfilePage = () => {
                         <button
                             onClick={() => handlePageChange(currentPage + 1)}
                             disabled={!pagination.hasNextPage}
+                            aria-disabled={!pagination.hasNextPage}
+                            tabIndex={!pagination.hasNextPage ? -1 : undefined}
                             className="btn-ghost px-4 py-1.5 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                             Next

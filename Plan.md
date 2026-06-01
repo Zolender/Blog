@@ -349,12 +349,44 @@ Goals: every username on the site becomes a link to a real page; users have an i
 - [ ] Enhanced profile header: larger avatar (`w-20 h-20`), surface-bg card with border, stats row (post count + join date) styled as `meta-text`
 - [ ] Updated loading skeleton to match the enhanced header layout (larger circle + wider lines)
 
-### Phase 16: Avatar File Upload
-Goals: let users upload an actual image instead of pasting a URL.
+### Phase 16: Avatar Presets & File Upload
+Goals: give users a real avatar without requiring them to host an image somewhere.
 
-- [ ] Supabase Storage — create `avatars` bucket, configure public read policy
-- [ ] `POST /upload/avatar` — backend generates a signed upload URL or proxies the upload directly
-- [ ] `SettingsPage` — replace profile pic URL input with a file picker; upload to Supabase Storage on select; save returned public URL
+- [ ] `SettingsPage` — add a preset picker: a small grid of 6–8 generic avatar illustrations (stored as static assets in `/public/avatars/`); clicking one fills the `profile_pic` field and saves immediately
+- [ ] Supabase Storage — create `avatars` bucket, configure public read policy (for custom upload, Phase 16b)
+- [ ] `POST /upload/avatar` — backend generates a signed upload URL or proxies the upload directly (Phase 16b)
+- [ ] `SettingsPage` — file picker tab alongside preset picker; upload to Supabase Storage on select; save returned public URL (Phase 16b)
+
+### Phase 18: Subscriptions / Follows
+Goals: give readers a reason to come back — follow an author and see their new posts.
+
+**Backend:**
+- [ ] `follows` table — `(follower_id, followee_id)` composite PK, `created_at`
+- [ ] `POST /users/:username/follow` — toggle follow/unfollow (Authenticated)
+- [ ] `GET /users/:username` — extend response to include `follower_count` and `is_following` (requires `optionalProtect`)
+- [ ] `GET /feed/following` — posts from authors the current user follows, paginated (Protected)
+
+**Frontend:**
+- [ ] Follow / Unfollow button on visitor ProfilePage — `btn-primary` / `btn-ghost` toggle with optimistic UI
+- [ ] Follower count in profile stats row
+- [ ] `/feed/following` route + page — "From people you follow" feed, gated behind login
+
+### Phase 19: Direct Messaging (WebSockets — Learning Phase)
+Goals: introduce real-time communication as a deliberate WebSocket learning milestone.
+
+**Why WebSockets:** Polling-based DMs would work but defeat the learning goal. This phase is intentionally deferred until subscriptions are live — you need a reason to message someone before you build the channel.
+
+**Backend:**
+- [ ] `conversations` + `messages` tables — `(participant_a, participant_b)` unique pair, messages with `sender_id`, `content`, `created_at`, `read_at`
+- [ ] WebSocket server via `ws` or `socket.io` — authenticate connection with JWT on upgrade
+- [ ] Events: `message:send`, `message:receive`, `conversation:read`
+- [ ] REST fallback: `GET /conversations`, `GET /conversations/:id/messages` for initial load
+
+**Frontend:**
+- [ ] Message button on visitor ProfilePage (only shown to logged-in users, not on own profile)
+- [ ] `/messages` route — conversation list sidebar + active thread
+- [ ] Real-time message delivery via WebSocket; unread badge on Navbar message icon
+- [ ] Graceful degraded mode if WebSocket drops — queue message, retry on reconnect
 
 ### Phase 17: Auth & Security Hardening
 Goals: close the gaps before the project is fully "done".
