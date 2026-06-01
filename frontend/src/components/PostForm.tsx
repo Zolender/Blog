@@ -248,7 +248,14 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
             const hasAfter  = closeRegex
                 ? closeRegex.test(content.slice(selEnd))
                 : content.slice(selEnd, selEnd + after.length) === after
-            if (hasBefore && hasAfter) {
+            // Guard: for single-char symmetric markers (e.g. *), the found marker may be
+            // the inner * of ** (bold). Only skip if it's exactly a double — not a triple
+            // (*** bold+italic), which should allow the single-layer removal to proceed.
+            const maskedByDouble =
+                before.length === 1 && before === after &&
+                selStart >= 2 && content[selStart - 2] === before[0] &&
+                (selStart < 3 || content[selStart - 3] !== before[0])
+            if (hasBefore && hasAfter && !maskedByDouble) {
                 const closeLen = closeRegex
                     ? (closeRegex.exec(content.slice(selEnd))?.[0].length ?? after.length)
                     : after.length
@@ -268,12 +275,17 @@ const PostForm = ({ initialValues, onSubmit, submitLabel, isLoading, error, draf
             const textAfter  = content.slice(selStart)
             const lastMark   = textBefore.lastIndexOf(before)
             if (lastMark !== -1) {
+                // Same doubled-marker guard for the cursor-inside case
+                const maskedByDouble =
+                    before.length === 1 && before === after &&
+                    lastMark > 0 && textBefore[lastMark - 1] === before[0] &&
+                    (lastMark < 2 || textBefore[lastMark - 2] !== before[0])
                 const between = textBefore.slice(lastMark + before.length)
                 const noClose = !between.includes(after) && (multiline || !between.includes("\n"))
                 const match   = closeRegex ? closeRegex.exec(textAfter) : null
                 const firstClose = closeRegex ? (match?.index ?? -1) : textAfter.indexOf(after)
                 const closeLen   = closeRegex ? (match?.[0].length ?? 0) : after.length
-                if (noClose && firstClose !== -1) {
+                if (noClose && firstClose !== -1 && !maskedByDouble) {
                     const inner = between + textAfter.slice(0, firstClose)
                     const next  = content.slice(0, lastMark) + inner + content.slice(selStart + firstClose + closeLen)
                     setContent(next)

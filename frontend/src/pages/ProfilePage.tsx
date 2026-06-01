@@ -164,7 +164,8 @@ const ProfilePage = () => {
 
                             {/* Stats */}
                             <p className="meta-text mt-3">
-                                {postCount} {postCount === 1 ? "post" : "posts"}
+                                <span className="font-medium text-primary">{postCount}</span>{" "}
+                                {postCount === 1 ? "post" : "posts"}
                                 <span className="mx-2 opacity-40">·</span>
                                 Member since {formatDate(profile.created_at, { month: "long", year: "numeric" })}
                             </p>
