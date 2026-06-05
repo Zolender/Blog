@@ -162,6 +162,16 @@ const PostPage = () => {
     }
 
 
+    const handleEditComment = async (commentId: number, newContent: string) => {
+        try {
+            await postsApi.editComment(Number(id), commentId, newContent)
+            setComments(prev => prev.map(c => c.id === commentId ? { ...c, content: newContent } : c))
+        } catch (err) {
+            showToast(err instanceof Error ? err.message : "Failed to update comment", "error")
+            throw err
+        }
+    }
+
     const handleDeleteComment = async (commentId: number)=>{
         try{
             await postsApi.deleteComment(Number(id), commentId)
@@ -174,9 +184,8 @@ const PostPage = () => {
     //managing ownership cases(comments and post)
 
     const canModifyPost = user && post && (user.id===post.author_id || user.role === "admin")
-    const canModifyComment = (comment: Comment)=>{
-        return user && (user.id === comment.author_id || user.role==="admin")
-    }
+    const canModifyComment = (comment: Comment) => user && (user.id === comment.author_id || user.role === "admin")
+    const canEditComment   = (comment: Comment) => user && user.id === comment.author_id
 
     //way tp get to separate top-level comments from reply ones, threading in a sort
     const topLevelComments = comments.filter((c)=> c.parent_id === null)
@@ -324,9 +333,11 @@ const PostPage = () => {
                                         <CommentItem
                                             comment={comment}
                                             canModify={!!canModifyComment(comment)}
-                                            onDelete={()=> handleDeleteComment(comment.id)}
-                                            onReply={()=> {
-                                                setReplyingTo(replyingTo === comment.id? null : comment.id)
+                                            canEdit={!!canEditComment(comment)}
+                                            onDelete={() => handleDeleteComment(comment.id)}
+                                            onEdit={handleEditComment}
+                                            onReply={() => {
+                                                setReplyingTo(replyingTo === comment.id ? null : comment.id)
                                                 setReplyContent("")
                                             }}
                                             showReplyButton={!!user}
@@ -366,7 +377,9 @@ const PostPage = () => {
                                                 <CommentItem
                                                     comment={reply}
                                                     canModify={!!canModifyComment(reply)}
-                                                    onDelete={()=> handleDeleteComment(reply.id)}
+                                                    canEdit={!!canEditComment(reply)}
+                                                    onDelete={() => handleDeleteComment(reply.id)}
+                                                    onEdit={handleEditComment}
                                                     showReplyButton={false}
                                                 />
                                             </div>

@@ -70,6 +70,38 @@ export const addComment = async (req: authRequest, res: Response, next: NextFunc
     }
 }
 
+export const editComment = async (req: authRequest, res: Response, next: NextFunction) => {
+    try {
+        const { commentId } = req.params
+
+        const parsed = z.object({ content: z.string().min(1).max(1000) }).safeParse(req.body)
+        if (!parsed.success) {
+            const errors = parsed.error.issues.map(({ path, message }) => ({ path, message }))
+            res.status(400).json({ message: "Invalid input", errors })
+            return
+        }
+
+        const commentResult = await pool.query("SELECT * FROM comments WHERE id = $1", [commentId])
+        if (commentResult.rows.length === 0) {
+            return res.status(404).json({ message: "Comment not found" })
+        }
+
+        // edit is author-only — admins can delete but should not alter someone else's words
+        if (commentResult.rows[0].author_id !== req.user!.id) {
+            return res.status(403).json({ message: "Not allowed to edit this comment" })
+        }
+
+        const updated = await pool.query(
+            "UPDATE comments SET content = $1 WHERE id = $2 RETURNING id, content, parent_id, created_at",
+            [parsed.data.content, commentId]
+        )
+
+        res.status(200).json({ message: "Comment updated", comment: updated.rows[0] })
+    } catch (err) {
+        next(err)
+    }
+}
+
 export const deleteComment = async (req: authRequest, res: Response, next: NextFunction) => {
     try {
         const { commentId } = req.params

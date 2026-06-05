@@ -28,6 +28,8 @@ export const postsApi = {
     addComment: (postId: number, data: {content: string; parent_id?: number})=>{
         return apiClient.post<{comment: Comment}>(`/posts/${postId}/comments`, data)
     },
+    editComment: (postId: number, commentId: number, content: string) =>
+        apiClient.put<{ comment: Pick<Comment, "id" | "content"> }>(`/posts/${postId}/comments/${commentId}`, { content }),
     deleteComment : (postId: number, commentId: number)=>{
         return apiClient.delete<{message: string}>(`/posts/${postId}/comments/${commentId}`)
     },
