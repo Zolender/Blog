@@ -4,6 +4,7 @@ import { Menu, Rss, PenLine, Shield, LogOut, LogIn, UserPlus, Settings } from 'l
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppDispatch, useAppSelector } from '../app/hooks'
 import { logout } from '../features/auth/authSlice'
+import { ROUTES } from '../utils/routes'
 
 const panelVariants = {
   hidden:  { x: '100%' },
@@ -27,7 +28,7 @@ const Navbar = () => {
   const handleLogout = () => {
     dispatch(logout())
     setMobileOpen(false)
-    navigate('/login')
+    navigate(ROUTES.login)
   }
 
   const linkClass = (path: string) =>
@@ -78,8 +79,8 @@ const Navbar = () => {
               </>
             ) : (
               <>
-                <Link to="/login"    className="nav-link">Sign in</Link>
-                <Link to="/register" className="btn-primary">Register</Link>
+                <Link to={ROUTES.login}    className="nav-link">Sign in</Link>
+                <Link to={ROUTES.register} className="btn-primary">Register</Link>
               </>
             )}
           </div>
@@ -196,7 +197,7 @@ const Navbar = () => {
                 ) : (
                   <>
                     <Link
-                      to="/login"
+                      to={ROUTES.login}
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center gap-3 px-3 py-3 font-sans text-sm text-primary hover:text-accent hover:bg-surface rounded-sm transition-colors duration-200"
                     >
@@ -204,7 +205,7 @@ const Navbar = () => {
                       Sign in
                     </Link>
                     <Link
-                      to="/register"
+                      to={ROUTES.register}
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center gap-3 px-3 py-3 font-sans text-sm text-accent font-medium hover:bg-surface rounded-sm transition-colors duration-200"
                     >

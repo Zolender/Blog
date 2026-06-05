@@ -1,5 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router";
 import { useAppSelector } from "../app/hooks";
+import { ROUTES } from "../utils/routes";
 import { useEffect, useRef, useState } from "react";
 import type { Post, Comment } from "../types";
 import { postsApi } from "../api/posts";
@@ -87,7 +88,7 @@ const PostPage = () => {
     //whenever a post is liked,...
     const handleLike = async ()=>{
         if(!user){
-            return navigate("/login")
+            return navigate(ROUTES.login)
         }
         
         if(likingRef.current) return
@@ -185,8 +186,13 @@ const PostPage = () => {
 
     if(error || !post){
         return (
-            <div className="state-container">
-                <p className="error-banner">{error?? "Post not found"}</p>
+            <div className="page-wrapper state-container">
+                <p className="font-serif text-xl text-primary mb-2">{error ?? "Post not found"}</p>
+                <p className="meta-text mb-6">This post may have been removed or the link is incorrect.</p>
+                <div className="flex items-center gap-3">
+                    <Link to="/" className="btn-primary">Back to feed</Link>
+                    <button onClick={() => window.location.reload()} className="btn-ghost">Try again</button>
+                </div>
             </div>
         )
     }
@@ -305,7 +311,7 @@ const PostPage = () => {
                             </form>
                         ): (
                             <p className="meta-text">
-                                <Link to="/login" className="text-accent hover:underline underline-offset-2">Sign in</Link> {" "}to leave a comment
+                                <Link to={ROUTES.login} className="text-accent hover:underline underline-offset-2">Sign in</Link> {" "}to leave a comment
                             </p>
                         )}
 

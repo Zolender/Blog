@@ -172,7 +172,9 @@ const FeedPage = () => {
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={!pagination.hasPrevPage}
-              className="btn-ghost px-4 py-1.5 text-xs"
+              aria-disabled={!pagination.hasPrevPage}
+              tabIndex={!pagination.hasPrevPage ? -1 : undefined}
+              className="btn-ghost px-4 py-1.5 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Previous
             </button>
@@ -183,7 +185,8 @@ const FeedPage = () => {
               ) : (
                 <button
                   key={page}
-                  onClick={() => handlePageChange(page)}
+                  onClick={() => handlePageChange(page as number)}
+                  aria-current={page === currentPage ? 'page' : undefined}
                   className={`w-8 h-8 font-sans text-xs border transition-colors duration-200 cursor-pointer
                     ${page === currentPage
                       ? 'bg-accent text-white border-accent'
@@ -198,9 +201,11 @@ const FeedPage = () => {
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={!pagination.hasNextPage}
-              className="btn-ghost px-4 py-1.5 text-xs"
+              aria-disabled={!pagination.hasNextPage}
+              tabIndex={!pagination.hasNextPage ? -1 : undefined}
+              className="btn-ghost px-4 py-1.5 text-xs disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              View More Essays
+              Next
             </button>
           </div>
         )}

@@ -3,6 +3,7 @@ import { Link } from "react-router"
 import { motion } from "framer-motion"
 import { authApi } from "../api/auth"
 import FloatingInput from "../components/FloatingInput"
+import { ROUTES } from "../utils/routes"
 
 const ForgotPasswordPage = () => {
     const [email, setEmail] = useState("")
@@ -55,7 +56,7 @@ const ForgotPasswordPage = () => {
                             If <span className="text-primary font-medium">{email}</span> is registered,
                             you'll receive a reset link shortly. It expires in 1 hour.
                         </p>
-                        <Link to="/login" className="btn-primary w-full mt-2">
+                        <Link to={ROUTES.login} className="btn-primary w-full mt-2">
                             Back to sign in
                         </Link>
                     </div>
@@ -85,7 +86,7 @@ const ForgotPasswordPage = () => {
                         </form>
 
                         <div className="mt-6 text-center">
-                            <Link to="/login" className="font-sans text-xs text-muted hover:text-accent transition-colors">
+                            <Link to={ROUTES.login} className="font-sans text-xs text-muted hover:text-accent transition-colors">
                                 Back to sign in
                             </Link>
                         </div>

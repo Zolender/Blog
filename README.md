@@ -99,4 +99,4 @@ likes       — user_id → users, post_id → posts  (composite PK)
 
 ---
 
-*Built from scratch as a full-stack learning project — every line written and understood.*
+*Built from scratch as a full-stack learning project*

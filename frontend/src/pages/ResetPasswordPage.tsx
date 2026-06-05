@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router"
 import { motion } from "framer-motion"
 import { authApi } from "../api/auth"
 import FloatingInput from "../components/FloatingInput"
+import { ROUTES } from "../utils/routes"
 
 const ResetPasswordPage = () => {
     const [searchParams]  = useSearchParams()
@@ -20,7 +21,7 @@ const ResetPasswordPage = () => {
         return () => { document.title = "Z-Tales" }
     }, [])
 
-    // no token in URL — someone landed here directly
+    // no token in URL meaning someone landed here directly
     if (!token) {
         return (
             <div className="min-h-screen bg-surface flex flex-col items-center justify-center px-4">
@@ -35,7 +36,7 @@ const ResetPasswordPage = () => {
         )
     }
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.SubmitEvent) => {
         e.preventDefault()
         setError(null)
 
@@ -52,7 +53,7 @@ const ResetPasswordPage = () => {
         try {
             await authApi.resetPassword(token, password)
             setSuccess(true)
-            setTimeout(() => navigate("/login"), 3000)
+            setTimeout(() => navigate(ROUTES.login), 3000)
         } catch (err) {
             setError(err instanceof Error ? err.message : "Something went wrong")
         } finally {
@@ -85,7 +86,7 @@ const ResetPasswordPage = () => {
                         <p className="font-sans text-sm text-muted leading-relaxed">
                             Your password has been changed. Redirecting you to sign in...
                         </p>
-                        <Link to="/login" className="btn-primary w-full">Sign in now</Link>
+                        <Link to={ROUTES.login} className="btn-primary w-full">Sign in now</Link>
                     </div>
                 ) : (
                     <>

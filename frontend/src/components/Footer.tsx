@@ -1,4 +1,5 @@
 import { Link, type To } from "react-router";
+import { ROUTES } from "../utils/routes";
 
 type LinkWithLabel = {
   to: To;
@@ -6,9 +7,9 @@ type LinkWithLabel = {
 };
 
 const NAV_LINKS: LinkWithLabel[] = [
-  { to: "/",         label: "Feed"    },
-  { to: "/register", label: "Join"    },
-  { to: "/login",    label: "Sign in" },
+  { to: "/",              label: "Feed"    },
+  { to: ROUTES.register,  label: "Join"    },
+  { to: ROUTES.login,     label: "Sign in" },
 ];
 
 const Footer = () => {
