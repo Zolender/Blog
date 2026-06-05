@@ -2,24 +2,39 @@ import { Navigate } from "react-router";
 import { useAppSelector } from "../app/hooks";
 import { ROUTES } from "../utils/routes";
 
-
 interface Props {
-    children : React.ReactNode
-    adminOnly? : boolean
+    children: React.ReactNode
+    adminOnly?: boolean
 }
 
-const ProtectedRoute = ({children, adminOnly = false} : Props) => {
-    const {user, isLoading} = useAppSelector((state)=> state.auth)
+const ProtectedRoute = ({ children, adminOnly = false }: Props) => {
+    const { user, token, isLoading, networkError } = useAppSelector(state => state.auth)
 
-    //while rehydratation is happening we don't know yet if the user is logged in or not, no need to start rendering the login page in that case yet
-    if(isLoading)return null
-    //in case the user isn't logged in then, redirection to the login page
-    if(!user) return <Navigate to={ROUTES.login} replace/>
-    //if the route is only for admins and the user isn't then, redirection to home
-    if(adminOnly && user.role !== "admin")return <Navigate to="/" replace/>
-    
+    if (isLoading) return null
 
-    return <>{children}</>;
+    // Server unreachable (cold start / offline) — we still have a token so don't
+    // redirect to login. Show a retry prompt instead.
+    if (networkError && token) {
+        return (
+            <div className="page-wrapper state-container">
+                <p className="font-serif text-xl text-primary mb-2">Couldn't reach the server</p>
+                <p className="meta-text mb-6">
+                    The server may be waking up. Give it a moment and try again.
+                </p>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="btn-primary"
+                >
+                    Retry
+                </button>
+            </div>
+        )
+    }
+
+    if (!user) return <Navigate to={ROUTES.login} replace />
+    if (adminOnly && user.role !== "admin") return <Navigate to="/" replace />
+
+    return <>{children}</>
 }
- 
+
 export default ProtectedRoute;

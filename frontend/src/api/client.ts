@@ -2,19 +2,25 @@ const BASE_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}
 
 const getToken = ()=> localStorage.getItem("token")
 
+// Carries the HTTP status so callers can distinguish 401 from network failures
+export class ApiError extends Error {
+    constructor(message: string, public readonly status: number) {
+        super(message)
+        this.name = "ApiError"
+    }
+}
+
 const request = async<T>(endpoint: string, options: RequestInit = {}): Promise<T> =>{
     const token = getToken()
-    //mutate the req header
     const headers: HeadersInit = {
         "Content-Type": "application/json",
         ...(token && {Authorization: `Bearer ${token}`}),
         ...options.headers,
     }
-    //making the call/request
     const response = await fetch(`${BASE_URL}${endpoint}`, {...options, headers})
     if(!response.ok){
         const error = await response.json().catch(()=>({message: "An error occurred"}))
-        throw new Error(error.message || "An error occurred")
+        throw new ApiError(error.message || "An error occurred", response.status)
     }
     return response.json() as Promise<T>
 }
