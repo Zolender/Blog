@@ -4,9 +4,15 @@ const getToken = ()=> localStorage.getItem("token")
 
 // Carries the HTTP status so callers can distinguish 401 from network failures
 export class ApiError extends Error {
-    constructor(message: string, public readonly status: number) {
-        super(message)
-        this.name = "ApiError"
+    constructor(message: string, status: number) {
+        super(message);
+        Object.defineProperty(this, 'status', {
+            value: status,
+            writable: false,
+            enumerable: true,
+            configurable: true
+        });
+        this.name = "ApiError";
     }
 }
 
