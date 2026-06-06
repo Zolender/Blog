@@ -195,8 +195,8 @@ const AdminPage = () => {
                     )}
                 </div>
 
-                {/* Tab bar */}
-                <div className="flex border-b border-border gap-0 -mb-2">
+                {/* Tab bar — border-b on this div acts as the section divider */}
+                <div className="flex border-b border-border gap-0">
                     {(["users", "posts"] as const).map(tab => (
                         <button
                             key={tab}
@@ -212,8 +212,6 @@ const AdminPage = () => {
                         </button>
                     ))}
                 </div>
-
-                <hr className="divider" />
 
                 {/* ── Users tab ─────────────────────────────────────────────── */}
                 {activeTab === "users" && (

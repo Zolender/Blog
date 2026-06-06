@@ -456,8 +456,9 @@ body {
   padding: 0.5rem 1.5rem;
   transition: background-color 0.2s;
   cursor: pointer;
-  display: inline-block;
-  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
     background-color: var(--color-danger-hover);
