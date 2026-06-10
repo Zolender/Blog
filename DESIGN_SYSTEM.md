@@ -21,7 +21,7 @@ When in doubt about a color, font, spacing value, or component structure — che
 | `bg-surface` | `#F0EFED` | Cards, sidebar, input backgrounds |
 | `border` | `#E5E5E5` | All borders, dividers, table lines |
 | `text-primary` | `#111111` | Headings, body text |
-| `text-muted` | `#888888` | Metadata, timestamps, placeholders |
+| `text-muted` | `#666666` | Metadata, timestamps, placeholders |
 | `accent` | `#1A4D3E` | Buttons, active states, links, pull quote bg |
 | `accent-hover` | `#163D31` | Hover state on accent elements |
 | `danger` | `#dc2626` | Delete actions, error text |
@@ -38,7 +38,7 @@ When in doubt about a color, font, spacing value, or component structure — che
   --color-accent-hover:  #163D31;
   --color-surface:       #F0EFED;
   --color-border:        #E5E5E5;
-  --color-muted:         #888888;
+  --color-muted:         #666666;
   --color-base:          #FAFAFA;
   --color-primary:       #111111;
   --color-danger:        #dc2626;
@@ -303,8 +303,10 @@ font-sans, small, white/60, mt-4
 - No card border — separated by spacing only
 - Layout: `avatar` left, content right (`flex gap-3`)
 - Author + timestamp in same row (`meta-text`)
-- Comment body: `body-text` at `text-sm`, `break-words`
-- Actions row: Reply (`nav-link` style), Delete (`btn-danger`)
+- Comment body: `body-text` at `text-sm`, `wrap-break-word`
+- Actions row: Reply (`nav-link` style), Edit (`nav-link` style, author only), Delete (`btn-danger`)
+- Edit mode: inline auto-growing textarea replaces the comment body; actions row hidden while editing; Save exits on success, stays open on failure so the user can retry
+- `canEdit` prop: `user.id === comment.author_id` — authors may edit their own words; admins may not (they can delete but should not alter someone else's writing)
 - Delete triggers `ConfirmModal` — self-contained state inside `CommentItem`
 - Nested reply indentation: `ml-10 border-l-2 border-border pl-4`
 

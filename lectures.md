@@ -1124,3 +1124,140 @@ If the server responds in 1 second, the cleanup fires and the message never appe
 
 ### `min-h-dvh` vs `min-h-screen`
 `min-h-screen` maps to `min-height: 100vh`. On mobile browsers, `100vh` includes the browser chrome (address bar), making the actual visible area smaller than 100vh. This causes a subtle scrollbar on pages designed to fill exactly one screen. `min-h-dvh` maps to `min-height: 100dvh` — the *dynamic* viewport height, which adjusts correctly as the browser chrome shows and hides. Use `dvh` for any full-height container that will be seen on mobile.
+
+---
+
+## Phase 14 — Auth Resilience & Routing
+
+### Three-way rejection in an async thunk
+
+`createAsyncThunk`'s `rejected` case handles all failures with one handler. But not all failures mean the same thing. For `rehydrateAuth`, there are three distinct outcomes:
+
+- **`no_token`** — localStorage had nothing. The user is a guest. Clear auth state.
+- **`auth_error`** — the server responded 401. The token is expired or invalid. Clear auth state, remove the token from localStorage.
+- **`network_error`** — the server did not respond (cold start, offline). The token may still be valid. Do not clear auth state — keep the user logged in and show a "Couldn't reach the server" message.
+
+Conflating all three into one "clear everything" handler logs users out on a slow server wake — a terrible experience on a free-tier backend. The fix uses `rejectWithValue` to pass a typed reason string:
+
+```typescript
+type RejectReason = "no_token" | "auth_error" | "network_error"
+
+// In the thunk:
+} catch (err) {
+    if (err instanceof ApiError) {
+        return rejectWithValue("auth_error" as RejectReason)
+    }
+    return rejectWithValue("network_error" as RejectReason)
+}
+
+// In extraReducers:
+builder.addCase(rehydrateAuth.rejected, (state, action) => {
+    const reason = action.payload as RejectReason
+    if (reason === "network_error") {
+        state.networkError = true  // keep token, show retry UI
+    } else {
+        state.user = null
+        state.token = null
+        localStorage.removeItem("token")
+    }
+    state.isLoading = false
+})
+```
+
+The `ApiError` class carries `status: number` so this check works: `instanceof ApiError` means the server responded (any HTTP error), whereas a bare `Error` means the `fetch()` itself threw (no response at all).
+
+### The `ApiError` class — carrying HTTP status through the stack
+
+A standard `Error` only has a `message`. When `fetch()` returns a 401, you need to know the status code to make decisions upstream. The custom `ApiError` class bridges this:
+
+```typescript
+export class ApiError extends Error {
+    readonly status: number
+    constructor(message: string, status: number) {
+        super(message)
+        this.status = status
+        this.name = "ApiError"
+    }
+}
+```
+
+The `readonly status: number` class property declaration is required for TypeScript to know the property exists at the type level. Setting it only via `Object.defineProperty` at runtime bypasses the type checker — `tsc -b` will error on `err.status` even though it works at runtime. Declare the property, then assign it in the constructor body. Both are needed.
+
+### SPA routing and `vercel.json`
+
+A React SPA has one real file: `index.html`. All "routes" like `/settings` or `/profile/alice` are handled by React Router in the browser — they are not real server paths.
+
+When Vercel serves a static deployment, a direct request to `https://z-tales.vercel.app/settings` looks for a real file at `/settings`. No file exists. Vercel returns its own 404.
+
+The fix is a catch-all rewrite rule in `vercel.json` at the project root:
+
+```json
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
+
+Every request — regardless of path — serves `index.html`. React Router then reads the URL and renders the correct page. Without this file, every page works when navigated to via a link in the app, but fails on refresh or when the URL is shared directly.
+
+### Centralising route strings with a `ROUTES` constant
+
+Hardcoding `"/login"` and `"/register"` across 8+ files is a maintenance trap — rename a route and you have to grep the entire codebase. A single constant file fixes this:
+
+```typescript
+// src/utils/routes.ts
+export const ROUTES = {
+    login:    "/login",
+    register: "/register",
+} as const
+```
+
+`as const` makes the values literal types (`"/login"` not `string`). This means TypeScript will catch a typo like `ROUTES.loginn` at compile time. All `navigate()` calls, `<Link to>`, and `<Navigate to>` now import from this one place.
+
+---
+
+## Phase 15 — Edit Comment & Admin Post Management
+
+### Author-only edit vs admin-can-delete
+
+Admins can delete any comment. Admins should not be able to edit any comment. The distinction matters: deleting removes content from the platform, which is a moderation action. Editing changes the author's words — that crosses a different line. The rule in code:
+
+```typescript
+// canModify = can delete = author OR admin
+const canDelete = user.id === comment.author_id || user.role === "admin"
+
+// canEdit = can edit text = author ONLY
+const canEdit = user.id === comment.author_id
+```
+
+One extra boolean prop on `CommentItem` separates these concerns. Both derive from the same user and comment objects.
+
+### Inline edit UX — the auto-grow textarea reset trick
+
+An inline edit replaces static text with a textarea in the same space. The textarea needs to grow with its content so it does not scroll internally. But it also needs to shrink when text is deleted. The standard pattern:
+
+```typescript
+el.style.height = 'auto'     // collapse to minimum first
+el.style.height = `${el.scrollHeight}px`  // then measure and apply
+```
+
+Order matters. Without resetting to `auto` first, `scrollHeight` is measured relative to the current (too-large) element height and will never report a smaller value. Reset, then measure.
+
+### Lazy loading tab data in a multi-tab admin panel
+
+An admin panel with multiple tabs (Users, Posts) has a choice: fetch all data upfront, or fetch each tab's data only when the user opens it. For a free-tier backend where every query costs time, lazy loading is the right call.
+
+The pattern uses a `postsLoaded` flag alongside the data state:
+
+```typescript
+const [postsLoaded, setPostsLoaded] = useState(false)
+
+// In the tab click handler:
+if (tab === "posts" && !postsLoaded) {
+    fetchPosts()
+    setPostsLoaded(true)
+}
+```
+
+The flag prevents re-fetching on subsequent tab switches (the user already has the data). It is not the same as checking `posts.length > 0` — that would re-fetch every time if the admin had zero posts.

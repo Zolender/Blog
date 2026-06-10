@@ -51,7 +51,9 @@ src/
 ├── layouts/      # RootLayout (Navbar + Outlet + Footer)
 ├── pages/        # Page components — FeedPage, PostPage, AuthPage...
 ├── types/        # Shared TypeScript interfaces
-├── utils/        # formatting.ts — getAvatarColor, getReadTime, formatDate
+├── utils/        # formatting.tsx — getAvatarColor, getReadTime, formatDate, stripMarkdown
+│               # routes.ts — ROUTES constant for auth path strings
+│               # meta.ts — Open Graph tag helpers
 ├── App.tsx       # Route tree
 └── main.tsx      # Entry point, Redux Provider
 ```

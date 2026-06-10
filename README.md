@@ -35,8 +35,8 @@ A full-stack blog platform built for writers and readers. Clean architecture, ty
 - **Posts** — Create, read, update, delete — with optional banner images
 - **Feed** — Paginated post feed with author info, like counts, comment counts
 - **Likes** — Toggle like/unlike on any post
-- **Comments** — Threaded comments with one level of replies
-- **Admin panel** — User management, role assignment, post moderation
+- **Comments** — Threaded comments with one level of replies, inline editing for authors
+- **Admin panel** — User management, role assignment, post moderation, post deletion
 - **RBAC** — Role-based access control (user / admin) enforced at the API level
 
 ---
@@ -93,7 +93,7 @@ Supabase (PostgreSQL)
 ```sql
 users       — id, username, email, password_hash, role, created_at
 posts       — id, title, content, banner_image, author_id → users
-comments    — id, body, post_id → posts, author_id → users, parent_id → comments
+comments    — id, content, post_id → posts, author_id → users, parent_id → comments
 likes       — user_id → users, post_id → posts  (composite PK)
 ```
 

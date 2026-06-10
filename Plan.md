@@ -102,7 +102,7 @@ Before writing a single query, we must define how our data lives together.
 ### Engagement Routes
 - [x] POST `/posts/:id/comments` - Add comment or reply (Authenticated users)
 - [x] DELETE `/posts/:id/comments/:commentId` - Delete comment (Author or Admin)
-- [ ] PUT `/posts/:id/comments/:commentId` - Edit comment (Author only)
+- [x] PUT `/posts/:id/comments/:commentId` - Edit comment (Author only)
 - [x] POST `/posts/:id/like` - Toggle like status (Authenticated users)
 
 ### User Routes
@@ -115,8 +115,8 @@ Before writing a single query, we must define how our data lives together.
 - [x] GET `/admin/users` - Fetch all users (Admin only)
 - [x] DELETE `/admin/users/:id` - Remove user (Admin only)
 - [x] PUT `/admin/users/:id/role` - Update user role (Admin only)
-- [ ] GET `/admin/posts` - Fetch all posts with author info (Admin only)
-- [ ] DELETE `/admin/posts/:id` - Delete any post (Admin only)
+- [x] GET `/admin/posts` - Fetch all posts with author info (Admin only)
+- [x] DELETE `/admin/posts/:id` - Delete any post (Admin only)
 
 ---
 
@@ -276,9 +276,9 @@ Goals: give users reasons to stay and come back.
 
 - [ ] Profile pages — `GET /users/:username`, public author page with bio + posts
 - [ ] Search — title + content `ILIKE` query, search input in Navbar or Feed
-- [ ] Edit comment — PUT endpoint + inline edit UI in CommentItem
+- [x] Edit comment — PUT endpoint + inline edit UI in CommentItem
 - [ ] Tags / categories — fixed tag set, filter feed by tag
-- [ ] Admin post management — list and delete any post from Admin Dashboard
+- [x] Admin post management — list and delete any post from Admin Dashboard
 
 ### Phase 10: Design Audit & Quality Pass ✅ COMPLETE
 Goals: fix every visual and accessibility issue before adding new features.
@@ -392,7 +392,7 @@ Goals: introduce real-time communication as a deliberate WebSocket learning mile
 Goals: close the gaps before the project is fully "done".
 
 - [ ] Auth URL sync — push `/login` or `/register` to browser history when switching tabs in `AuthPage` so the URL stays in sync with the active tab
-- [ ] Auth route constant — replace all hardcoded `"/login"` strings in `navigate()` and `<Link to>` with a single shared constant
+- [x] Auth route constant — replace all hardcoded `"/login"` strings in `navigate()` and `<Link to>` with a single shared constant
 - [ ] `beforeunload` guard — warn before tab close if `PostForm` content has changed since the last autosave
 - [ ] JWT expiry — verify `signToken` sets `expiresIn`; add `"7d"` if missing
 - [ ] Expired token cleanup — `DELETE FROM password_reset_tokens WHERE expires_at < NOW()` on every reset use
