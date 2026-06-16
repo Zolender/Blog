@@ -240,7 +240,12 @@ const PostPage = () => {
                             <Avatar username={post.author_username} profilePic={post.author_profile_pic} size="md" />
                             <div className="flex flex-col">
                                 <span className="text-sm font-medium font-sans text-primary">{post.author_username}</span>
-                                <span className="meta-text">{formatDate(post.created_at)} · {getReadTime(post.content)}</span>
+                                <span className="meta-text">
+                                    {formatDate(post.created_at)} · {getReadTime(post.content)}
+                                    {post.updated_at && (
+                                        <span className="ml-2 italic">· Edited {formatDate(post.updated_at)}</span>
+                                    )}
+                                </span>
                             </div>
                         </Link>
 

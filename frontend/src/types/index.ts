@@ -14,6 +14,7 @@ export interface Post{
     content: string
     banner_image: string | null
     created_at : string
+    updated_at: string | null
     author_id: number
     author_username: string
     author_profile_pic: string | null

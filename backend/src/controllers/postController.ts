@@ -25,6 +25,7 @@ export const getAllPosts = async (req: Request, res: Response, next: NextFunctio
                     posts.content,
                     posts.banner_image,
                     posts.created_at,
+                    posts.updated_at,
                     users.id AS author_id,
                     users.username AS author_username,
                     users.profile_pic AS author_profile_pic,
@@ -72,6 +73,7 @@ export const getPostById = async (req: authRequest, res: Response, next: NextFun
                 posts.content,
                 posts.banner_image,
                 posts.created_at,
+                posts.updated_at,
                 users.id AS author_id,
                 users.username AS author_username,
                 users.profile_pic AS author_profile_pic,
@@ -182,8 +184,9 @@ export const updatePost = async (req: authRequest, res: Response, next: NextFunc
         if(title !== undefined) { fields.push(`title = $${values.length + 1}`); values.push(title)}
         if(content !== undefined) { fields.push(`content = $${values.length + 1}`); values.push(content)}
         if('banner_image' in parsed.data) { fields.push(`banner_image = $${values.length + 1}`); values.push(banner_image || null)}
+        fields.push(`updated_at = NOW()`)
 
-        values.push(id)    
+        values.push(id)
         const updated = await pool.query(`UPDATE posts SET ${fields.join(', ')} WHERE id = $${values.length} RETURNING *`, values)
 
         res.status(200).json({ message: "Post updated", post: updated.rows[0] })
