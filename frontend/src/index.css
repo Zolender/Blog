@@ -222,6 +222,7 @@ body {
   justify-content: center;
   flex-shrink: 0;
   background-color: var(--color-accent);
+  overflow: hidden;
 }
 
 @utility avatar-md {
@@ -233,6 +234,7 @@ body {
   justify-content: center;
   flex-shrink: 0;
   background-color: var(--color-accent);
+  overflow: hidden;
 }
 
 @utility avatar-initial {

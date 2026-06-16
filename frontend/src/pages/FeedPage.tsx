@@ -7,7 +7,8 @@ import { postsApi } from '../api/posts'
 import APostCard from '../components/APostCard'
 import SkeletonCard from '../components/SkeletonCard'
 import PullQuote from '../components/PullQuote'
-import { getAvatarColor, formatDate, stripMarkdown, getPageNumbers } from '../utils/formatting'
+import { formatDate, stripMarkdown, getPageNumbers } from '../utils/formatting'
+import Avatar from '../components/Avatar'
 
 const pageVariants = {
   hidden:  { opacity: 0, y: 10 },
@@ -132,11 +133,7 @@ const FeedPage = () => {
                 onClick={e => e.stopPropagation()}
                 className="flex items-center gap-2 hover:opacity-80 transition-opacity"
               >
-                <div className={`avatar ${getAvatarColor(hero.author_username)}`}>
-                  <span className="avatar-initial">
-                    {hero.author_username.charAt(0).toUpperCase()}
-                  </span>
-                </div>
+                <Avatar username={hero.author_username} profilePic={hero.author_profile_pic} />
                 <span className="font-sans text-xs font-medium text-primary">
                   {hero.author_username}
                 </span>

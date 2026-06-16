@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import type { Comment } from "../types";
 import ConfirmModal from "./ConfirmModal";
-import { formatDate, getAvatarColor } from "../utils/formatting";
+import { formatDate } from "../utils/formatting"
+import Avatar from "./Avatar";
 import { motion } from 'framer-motion'
 
 interface CommentItemProps {
@@ -64,9 +65,7 @@ const CommentItem = ({ comment, canModify, canEdit, onDelete, onEdit, onReply, s
             />
 
             <div className="flex gap-3">
-                <div className={`avatar shrink-0 ${getAvatarColor(comment.author_username)}`}>
-                    <span className="avatar-initial">{comment.author_username.charAt(0).toUpperCase()}</span>
-                </div>
+                <Avatar username={comment.author_username} profilePic={comment.author_profile_pic} />
 
                 <div className="flex-1 flex flex-col gap-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">

@@ -2,15 +2,14 @@ import { Link } from "react-router"
 import type { Post } from "../types"
 import { motion } from "framer-motion"
 import { Heart, MessageCircle } from "lucide-react"
-import { formatDate, getAvatarColor, getReadTime, stripMarkdown } from "../utils/formatting"
+import { formatDate, getReadTime, stripMarkdown } from "../utils/formatting"
+import Avatar from "./Avatar"
 
 interface Props {
     post: Post
 }
 
 const APostCard = ({ post }: Props) => {
-    const initial = post.author_username.charAt(0).toUpperCase()
-    const avatarColor = getAvatarColor(post.author_username)
     const strippedContent = stripMarkdown(post.content)
     const excerpt = strippedContent.slice(0, 140)
 
@@ -49,9 +48,7 @@ const APostCard = ({ post }: Props) => {
                             onClick={e => e.stopPropagation()}
                             className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                         >
-                            <div className={`avatar ${avatarColor}`}>
-                                <span className="avatar-initial">{initial}</span>
-                            </div>
+                            <Avatar username={post.author_username} profilePic={post.author_profile_pic} />
                             <p className="font-sans text-xs font-medium text-primary">{post.author_username}</p>
                         </Link>
 

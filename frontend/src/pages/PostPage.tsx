@@ -10,7 +10,8 @@ import remarkGfm from "remark-gfm";
 import { useToast } from "../components/Toast";
 import ConfirmModal from "../components/ConfirmModal";
 import { motion } from "framer-motion";
-import { formatDate, getAvatarColor, getReadTime, stripMarkdown } from "../utils/formatting";
+import { formatDate, getReadTime, stripMarkdown } from "../utils/formatting";
+import Avatar from "../components/Avatar";
 import { Edit2, Heart, MessageCircle, Trash2 } from "lucide-react";
 import SkeletonPost from "../components/SkeletonPost";
 import { clearPostMeta, setPostMeta } from "../utils/meta";
@@ -236,11 +237,7 @@ const PostPage = () => {
                 
                     <div className="flex items-center justify-between flex-wrap gap-3">
                         <Link to={`/users/${post.author_username}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                            <div className={`avatar-md ${getAvatarColor(post.author_username)}`}>
-                                <span className="avatar-initial text-sm!">
-                                    {post.author_username.charAt(0).toUpperCase()}
-                                </span>
-                            </div>
+                            <Avatar username={post.author_username} profilePic={post.author_profile_pic} size="md" />
                             <div className="flex flex-col">
                                 <span className="text-sm font-medium font-sans text-primary">{post.author_username}</span>
                                 <span className="meta-text">{formatDate(post.created_at)} · {getReadTime(post.content)}</span>
