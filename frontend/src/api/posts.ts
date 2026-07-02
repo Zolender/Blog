@@ -10,6 +10,13 @@ export const postsApi = {
             posts: data.posts.map(p=>({...p, like_count: Number(p.like_count), comment_count : Number(p.comment_count)}))
         }
     },
+    search: async (query: string, page = 1, limit = 20) => {
+        const data = await apiClient.get<{posts: Post[]; pagination : PaginationMeta}>(`/posts?q=${encodeURIComponent(query)}&page=${page}&limit=${limit}`)
+        return {
+            ...data,
+            posts: data.posts.map(p=>({...p, like_count: Number(p.like_count), comment_count : Number(p.comment_count)}))
+        }
+    },
     getById: async (id: number)=> {
         const data = await apiClient.get<{post: Post; comments: Comment[]}>(`/posts/${id}`)
         return {

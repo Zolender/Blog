@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router'
-import { Menu, Rss, PenLine, Shield, LogOut, LogIn, UserPlus, Settings } from 'lucide-react'
+import { Menu, Rss, PenLine, Shield, LogOut, LogIn, UserPlus, Settings, Search } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAppDispatch, useAppSelector } from '../app/hooks'
 import { logout } from '../features/auth/authSlice'
@@ -24,11 +24,21 @@ const Navbar = () => {
   const navigate  = useNavigate()
   const location  = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const handleLogout = () => {
     dispatch(logout())
     setMobileOpen(false)
     navigate(ROUTES.login)
+  }
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const trimmed = searchQuery.trim()
+    if (!trimmed) return
+    navigate(`${ROUTES.search}?q=${encodeURIComponent(trimmed)}`)
+    setSearchQuery('')
+    setMobileOpen(false)
   }
 
   const linkClass = (path: string) =>
@@ -39,6 +49,12 @@ const Navbar = () => {
       to: '/',
       label: 'Feed',
       icon: <Rss size={15} />,
+      disabled: false,
+    },
+    {
+      to: '/search',
+      label: 'Search',
+      icon: <Search size={15} />,
       disabled: false,
     },
     {
@@ -67,6 +83,17 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-5">
+            <form onSubmit={handleSearch} className="relative">
+              <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted pointer-events-none" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search..."
+                aria-label="Search tales"
+                className="w-40 bg-surface border border-border pl-8 pr-3 py-1.5 font-sans text-sm text-primary outline-none focus:border-accent focus:w-52 transition-all duration-200"
+              />
+            </form>
             {user ? (
               <>
                 <Link to={`/users/${user.username}`} className="meta-text hover:text-accent transition-colors">

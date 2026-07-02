@@ -17,6 +17,18 @@ export const getAllPosts = async (req: Request, res: Response, next: NextFunctio
         const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20))
         const offset = (page - 1) * limit
 
+        // optional search term — when present we filter title/content with ILIKE.
+        // ILIKE is case-insensitive; the '%term%' value is passed as a bound
+        // parameter ($1), so there is no SQL-injection risk from user input.
+        const q = ((req.query.q as string) || "").trim()
+        const where = q ? "WHERE posts.title ILIKE $1 OR posts.content ILIKE $1" : ""
+        const searchTerm = `%${q}%`
+
+        // when q exists, $1 is the search term, so limit/offset shift to $2/$3
+        const limitParam  = q ? "$2" : "$1"
+        const offsetParam = q ? "$3" : "$2"
+        const postsParams = q ? [searchTerm, limit, offset] : [limit, offset]
+
         const [postsResult, countResult] = await Promise.all([
             pool.query(`
                 SELECT
@@ -35,11 +47,12 @@ export const getAllPosts = async (req: Request, res: Response, next: NextFunctio
                 JOIN users ON posts.author_id = users.id
                 LEFT JOIN likes ON posts.id = likes.post_id
                 LEFT JOIN comments ON posts.id = comments.post_id
+                ${where}
                 GROUP BY posts.id, users.id
                 ORDER BY posts.created_at DESC
-                LIMIT $1 OFFSET $2
-            `, [limit, offset]),
-            pool.query("SELECT COUNT(*) FROM posts")
+                LIMIT ${limitParam} OFFSET ${offsetParam}
+            `, postsParams),
+            pool.query(`SELECT COUNT(*) FROM posts ${where}`, q ? [searchTerm] : [])
         ])
 
         const totalPosts = parseInt(countResult.rows[0].count)

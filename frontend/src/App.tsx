@@ -17,6 +17,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 import ResetPasswordPage from "./pages/ResetPasswordPage"
 import ProfilePage from "./pages/ProfilePage"
 import SettingsPage from "./pages/SettingsPage"
+import SearchPage from "./pages/SearchPage"
 import { MotionConfig } from "framer-motion"
 import SkeletonCard from "./components/SkeletonCard"
 import SkeletonEditor from "./components/SkeletonEditor"
@@ -63,6 +64,7 @@ const App = () => {
 
                     <Route element={<RootLayout />}>
                         <Route index element={<FeedPage />} />
+                        <Route path="search" element={<SearchPage />} />
                         <Route path="posts/:id" element={<PostPage />} />
                         <Route path="users/:username" element={<ProfilePage />} />
                         <Route path="settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
